@@ -225,6 +225,9 @@ tr.oncourt td:first-child{box-shadow:inset 3px 0 0 var(--live)}
 .rules td{padding:10px 12px;white-space:normal;line-height:1.35}
 .rules td:first-child{position:static;width:auto}
 .rules td:last-child{width:72px;text-align:right;font-weight:800;font-size:15px;white-space:nowrap}
+#stale{padding-top:16px}
+#stale .prog{margin:0;color:var(--ink);border-color:var(--gold-bright);background:var(--gold-soft)}
+#stale .prog span{flex:1}
 footer{color:var(--muted);font-size:12px;padding-block:24px 32px;border-top:1px solid var(--line)}
 
 /* phone: tabs become a bottom bar */
@@ -261,6 +264,7 @@ footer{color:var(--muted);font-size:12px;padding-block:24px 32px;border-top:1px 
   </div>
 </header>
 
+<div class="wrap" id="stale" hidden></div>
 <main class="wrap" id="main"><div class="loading">Loading the season…</div></main>
 <footer class="wrap">Silkiu Magnatai Fantasy Analytics App · Data from the official EuroLeague API. Fantasy Points (FP) use the Silkiu Magnatai scoring rules; tap the ⓘ button for the full list. Times are in your local time zone.</footer>
 <div id="sheet-root"></div>
@@ -282,7 +286,7 @@ const S = {
   players: { Accumulated: null, PerGame: null }, mode: "PerGame",
   sort: { key: "fp", asc: false }, search: "", team: "",
   live: new Map(), standings: null, timer: null, viaProxy: false,
-  agg: null, tops: [], gameTop: new Map(), fpPromise: null, fpProg: null, token: 0,
+  agg: null, tops: [], gameTop: new Map(), fpPromise: null, fpProg: null, token: 0, staleKeys: new Map(),
 };
 try { const t = localStorage.getItem("sm-tab"); if (t) S.tab = t; } catch (e) {}
 
@@ -439,9 +443,23 @@ async function loadTeamMap(y) {
   }
   teamMem.set(y, m); return m;
 }
+/* Keep the last good copy; if EuroLeague can't be reached, fall back to it and show a banner. */
+async function fresh(key, fetcher) {
+  try { const v = await fetcher(); store.set("last:" + key, { t: Date.now(), v }); markOnline(key); return v; }
+  catch (e) { const c = store.get("last:" + key); if (!c) throw e; S.staleKeys.set(key, c.t); paintStale(); return c.v; }
+}
+function markOnline(key) { if (S.staleKeys.delete(key)) paintStale(); }
+function paintStale() {
+  const el = $("#stale"); if (!el) return;
+  if (!S.staleKeys.size) { el.hidden = true; el.innerHTML = ""; return; }
+  const t = Math.min(...S.staleKeys.values()), d = new Date(t);
+  const when = (Date.now() - t < 864e5 ? "" : dtf.format(d) + ", ") + tf.format(d);
+  el.hidden = false;
+  el.innerHTML = `<div class="prog card" role="status"><span><b>Can't reach EuroLeague right now.</b> Showing data saved at ${when}. The app keeps trying in the background.</span><button class="btn" data-retry>Try now</button></div>`;
+}
 async function loadPlayers(mode) {
   if (S.players[mode]) return S.players[mode];
-  const d = await getJSON("api", `/v3/competitions/${COMP}/statistics/players/traditional?seasonMode=Single&statisticMode=${mode}&seasonCode=${COMP}${S.season}&limit=2000`);
+  const d = await fresh(`p:${S.season}:${mode}`, () => getJSON("api", `/v3/competitions/${COMP}/statistics/players/traditional?seasonMode=Single&statisticMode=${mode}&seasonCode=${COMP}${S.season}&limit=2000`));
   S.players[mode] = (d.players || []).map(flatPlayer);
   return S.players[mode];
 }
@@ -549,7 +567,7 @@ function paintProgress() {
 /* ================= season boot + live polling ================= */
 async function loadSeason() {
   clearInterval(S.timer);
-  S.token++;
+  S.token++; S.staleKeys = new Map(); paintStale();
   Object.assign(S, { games: [], round: null, players: { Accumulated: null, PerGame: null }, live: new Map(), standings: null, agg: null, tops: [], gameTop: new Map(), fpPromise: null, fpProg: null });
   $("#main").innerHTML = `<div class="loading">Loading the ${seasonLabel(S.season)} season…</div>`;
   try { await refreshSchedule(); } catch (e) { return showError(e); }
@@ -560,13 +578,18 @@ async function loadSeason() {
   S.timer = setInterval(tick, LIVE_REFRESH_MS);
 }
 async function refreshSchedule() {
-  const d = await getJSON("api", `/v2/competitions/${COMP}/seasons/${COMP}${S.season}/games`);
-  S.games = (d.data || []).map(normGame).sort((a, b) => new Date(a.date) - new Date(b.date));
+  S.games = await fresh(`g:${S.season}`, async () => {
+    const d = await getJSON("api", `/v2/competitions/${COMP}/seasons/${COMP}${S.season}/games`);
+    return (d.data || []).map(normGame).sort((a, b) => new Date(a.date) - new Date(b.date));
+  });
 }
 async function tick() {
   const tok = S.token, before = S.games.filter(g => g.played).length;
   const hadCandidates = liveCandidates().length > 0;
-  if (hadCandidates) { try { await refreshSchedule(); } catch (e) {} }
+  if (hadCandidates || S.staleKeys.size) {
+    try { await refreshSchedule(); } catch (e) {}
+    if (S.staleKeys.has(`p:${S.season}:PerGame`) || S.staleKeys.has(`p:${S.season}:Accumulated`)) { S.players = { Accumulated: null, PerGame: null }; try { await loadPlayers(S.mode); } catch (e) {} }
+  }
   if (tok !== S.token) return;
   await pollLive();
   if (S.games.filter(g => g.played).length !== before) { S.fpPromise = null; S.agg = null; S.standings = null; ensureFP(); }
@@ -954,7 +977,7 @@ function openInfo() {
 document.addEventListener("click", (e) => {
   const t = e.target.closest("[data-retry],[data-tab],[data-game],[data-player],[data-mode],[data-sort],[data-sortby],[data-close],[data-back],[data-info],[data-hist],[data-histmore],[data-h2h],[data-rnav]");
   if (!t) return;
-  if (t.hasAttribute("data-retry")) { if (!S.games.length) return loadSeason(); S.standings = null; return render(); }
+  if (t.hasAttribute("data-retry")) { if (!S.games.length || S.staleKeys.size) return loadSeason(); S.standings = null; return render(); }
   if (t.hasAttribute("data-close")) { if (e.target === t || t.tagName === "BUTTON") closeSheet(); return; }
   if (t.hasAttribute("data-histmore")) return renderHistory(t.dataset.histmore, t.dataset.opp, +t.dataset.back);
   if (t.hasAttribute("data-back")) return back();
