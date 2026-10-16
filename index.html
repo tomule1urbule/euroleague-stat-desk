@@ -105,12 +105,13 @@ select.input,input.input{background:var(--surface);border:1px solid var(--line-2
 .roundnav .btn{padding:8px 11px}
 .day{margin-bottom:24px}
 .day h3{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
-.game{display:flex;flex-direction:column;gap:10px;text-align:left;width:100%;padding:14px 16px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);transition:transform .15s,border-color .15s}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(310px,100%),1fr));gap:12px}
+.game{display:flex;flex-direction:column;gap:10px;text-align:left;width:100%;min-width:0;max-width:100%;overflow:hidden;padding:14px 16px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);transition:transform .15s,border-color .15s}
 .game:hover{transform:translateY(-2px);border-color:var(--line-2)}
 .game.is-live{border-color:var(--live);box-shadow:0 0 0 1px var(--live),var(--shadow)}
 .g-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.g-top .sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-top .sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1;text-align:right}
+.g-top .pill{flex:none}
 .g-row{display:flex;align-items:center;gap:10px;min-width:0}
 .g-row img{width:30px;height:30px}
 .g-name{flex:1;min-width:0;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -249,7 +250,8 @@ footer{color:var(--muted);font-size:12px;padding-block:24px 32px;border-top:1px 
   .brand-txt b{font-size:15px}
   .match{padding:16px 10px;gap:8px}
   .match .sc{font-size:34px}.match img{width:40px;height:40px}.match .nm{font-size:14px}
-  .grid{grid-template-columns:1fr}
+  .grid{grid-template-columns:minmax(0,1fr)}
+  main,section,.day{min-width:0;max-width:100%}
   /* header on one row */
   .top .wrap{flex-wrap:nowrap;gap:10px;padding-block:10px}
   .mark{width:36px;height:36px;border-radius:10px}.mark svg{width:30px;height:30px}
@@ -666,6 +668,11 @@ function defaultRound() {
   if (!started && new Date(firstOpen.date) - Date.now() > 2 * 864e5) { const prev = rounds[rounds.indexOf(k) - 1]; if (prev) return prev; }
   return k;
 }
+const liveLabel = (L) => {
+  const t = String(L?.RemainingPartialTime || "").trim(), q = String(L?.Quarter || "").trim();
+  if (/^0?0:00$/.test(t)) return "Live · Break";
+  return `Live${q ? " · Q" + esc(q) : ""} ${esc(t)}`;
+};
 const liveCandidates = () => S.games.filter(g => !g.played && Date.now() >= new Date(g.date).getTime() - 10 * 60e3 && Date.now() - new Date(g.date).getTime() < 6 * 3600e3);
 async function pollLive() {
   await Promise.all(liveCandidates().map(async g => {
@@ -707,7 +714,7 @@ function gameCard(g) {
   const time = new Date(g.date);
   let pill = `<span class="pill">${tf.format(time)}</span>`;
   if (st === "final") pill = `<span class="pill final">Final</span>`;
-  if (st === "live") pill = `<span class="pill live">Live${L.Quarter ? " · Q" + esc(L.Quarter) : ""} ${esc(L.RemainingPartialTime || "")}</span>`;
+  if (st === "live") pill = `<span class="pill live">${liveLabel(L)}</span>`;
   if (st === "starting") pill = `<span class="pill">Tip-off ${tf.format(time)}</span>`;
   if (st === "ended") pill = `<span class="pill final">Ended · confirming</span>`;
   const row = (c, s, lost) => `<div class="g-row ${lost ? "lost" : ""}"><img class="crest" src="${esc(c.crest)}" alt="" loading="lazy"><span class="g-name">${esc(c.name)}</span><span class="g-score">${showScore ? s : ""}</span></div>`;
@@ -785,7 +792,7 @@ function renderBox(g, b) {
   if (!b.teams.length) { $("#gbody").innerHTML = '<div class="empty">No box score yet.</div>'; return; }
   const live = b.live || gameState(g) === "live";
   const ended = !live && !g.played;
-  const mid = live ? `<span class="pill live">Live${L?.Quarter ? " · Q" + esc(L.Quarter) : ""} ${esc(L?.RemainingPartialTime || "")}</span>`
+  const mid = live ? `<span class="pill live">${liveLabel(L)}</span>`
     : `<span class="pill final">${ended ? "Ended · confirming" : "Final"}</span>`;
   const bar = live ? `<div class="livebar card"><span>Updated <b>${tfs.format(new Date())}</b><span class="wide-only"> · refreshes every ${LIVE_REFRESH_MS / 1000} s</span></span><button class="btn" data-refreshgame="${g.code}">↻ Refresh</button></div>` : "";
   let hs = b.teams[0]?.tot?.pts ?? g.home.score, as = b.teams[1]?.tot?.pts ?? g.away.score;
