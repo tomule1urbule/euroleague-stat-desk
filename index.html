@@ -274,7 +274,9 @@ footer{color:var(--muted);font-size:12px;padding-block:24px 32px;border-top:1px 
 /* ================= config ================= */
 const COMP = "E";
 const HOSTS = { api: "https://api-live.euroleague.net", live: "https://live.euroleague.net" };
-const LIVE_REFRESH_MS = 20000;
+const LIVE_REFRESH_MS = 20000;              // live games only: tiny score feed, plus the box score you have open
+const SCHEDULE_MAX_AGE = 3 * 3600e3;        // full season schedule: re-download at most every 3 hours
+const DATA_MAX_AGE = 3 * 3600e3;            // season player stats: same, or sooner once a game finishes
 const HISTORY_SEASONS = 5;
 const NOW_SEASON = (() => { const d = new Date(); return d.getMonth() >= 6 ? d.getFullYear() : d.getFullYear() - 1; })();
 const SEASONS = [0, 1, 2, 3, 4].map(i => NOW_SEASON - i);
@@ -444,7 +446,11 @@ async function loadTeamMap(y) {
   teamMem.set(y, m); return m;
 }
 /* Keep the last good copy; if EuroLeague can't be reached, fall back to it and show a banner. */
-async function fresh(key, fetcher) {
+async function fresh(key, fetcher, maxAge = 0, afterFinals = false) {
+  if (maxAge) {
+    const c = store.get("last:" + key);
+    if (c && Date.now() - c.t < maxAge && (!afterFinals || c.t > (S.finalsAt || 0))) return c.v;
+  }
   try { const v = await fetcher(); store.set("last:" + key, { t: Date.now(), v }); markOnline(key); return v; }
   catch (e) { const c = store.get("last:" + key); if (!c) throw e; S.staleKeys.set(key, c.t); paintStale(); return c.v; }
 }
@@ -455,7 +461,8 @@ function paintStale() {
 }
 async function loadPlayers(mode) {
   if (S.players[mode]) return S.players[mode];
-  const d = await fresh(`p:${S.season}:${mode}`, () => getJSON("api", `/v3/competitions/${COMP}/statistics/players/traditional?seasonMode=Single&statisticMode=${mode}&seasonCode=${COMP}${S.season}&limit=2000`));
+  const d = await fresh(`p:${S.season}:${mode}`, () => getJSON("api", `/v3/competitions/${COMP}/statistics/players/traditional?seasonMode=Single&statisticMode=${mode}&seasonCode=${COMP}${S.season}&limit=2000`),
+    S.season < NOW_SEASON ? Infinity : DATA_MAX_AGE, true);
   S.players[mode] = (d.players || []).map(flatPlayer);
   return S.players[mode];
 }
@@ -566,6 +573,7 @@ async function loadSeason() {
   S.token++; S.staleKeys = new Map(); paintStale();
   Object.assign(S, { games: [], round: null, players: { Accumulated: null, PerGame: null }, live: new Map(), standings: null, agg: null, tops: [], gameTop: new Map(), fpPromise: null, fpProg: null });
   $("#main").innerHTML = `<div class="loading">Loading the ${seasonLabel(S.season)} season…</div>`;
+  S.finalsAt = store.get("finat:" + S.season) || 0; S.lastSchedTry = 0;
   try { await refreshSchedule(); } catch (e) { return showError(e); }
   S.round = defaultRound();
   await pollLive();
@@ -573,24 +581,49 @@ async function loadSeason() {
   ensureFP();
   S.timer = setInterval(tick, LIVE_REFRESH_MS);
 }
-async function refreshSchedule() {
+async function refreshSchedule(force) {
   S.games = await fresh(`g:${S.season}`, async () => {
     const d = await getJSON("api", `/v2/competitions/${COMP}/seasons/${COMP}${S.season}/games`);
     return (d.data || []).map(normGame).sort((a, b) => new Date(a.date) - new Date(b.date));
-  });
+  }, force ? 0 : (S.season < NOW_SEASON ? Infinity : SCHEDULE_MAX_AGE));
+  applySavedFinals();
+}
+/* Final buzzer, detected from the live score feed (no full-schedule download needed). */
+const headerFinal = (L) => !!L && !L.Live && n(L.ScoreA) + n(L.ScoreB) > 0 && n(L.ScoreA) !== n(L.ScoreB)
+  && /^0?0:00$/.test(String(L.RemainingPartialTime || "").trim()) && (!String(L.Quarter || "").trim() || n(L.Quarter) >= 4);
+function setFinal(g, h, a) { g.played = true; g.home.score = h; g.away.score = a; g.liveFinal = true; }
+function applySavedFinals() {
+  const fin = store.get("fin:" + S.season) || {};
+  for (const g of S.games) if (!g.played && fin[g.code]) setFinal(g, fin[g.code][0], fin[g.code][1]);
+}
+function applyLiveFinals() {
+  const fin = store.get("fin:" + S.season) || {}; let changed = 0;
+  for (const g of S.games) {
+    if (g.played) continue;
+    const L = S.live.get(g.code); if (!headerFinal(L)) continue;
+    let h = n(L.ScoreA), a = n(L.ScoreB);
+    if (String(L.CodeTeamA || "").trim() === g.away.code) [h, a] = [a, h];
+    setFinal(g, h, a); fin[g.code] = [h, a]; changed++;
+  }
+  if (changed) { store.set("fin:" + S.season, fin); S.finalsAt = Date.now(); store.set("finat:" + S.season, S.finalsAt); }
+  return changed;
 }
 async function tick() {
-  const tok = S.token, before = S.games.filter(g => g.played).length;
-  const hadCandidates = liveCandidates().length > 0;
-  if (hadCandidates || S.staleKeys.size) {
-    try { await refreshSchedule(); } catch (e) {}
-    if (S.staleKeys.has(`p:${S.season}:PerGame`) || S.staleKeys.has(`p:${S.season}:Accumulated`)) { S.players = { Accumulated: null, PerGame: null }; try { await loadPlayers(S.mode); } catch (e) {} }
+  const tok = S.token;
+  // The full season schedule is only re-downloaded when the saved copy is over 3 hours old
+  // (or, after a failed attempt, at most every 2 minutes) - never just because a game is on.
+  const saved = store.get("last:g:" + S.season), age = saved ? Date.now() - saved.t : Infinity;
+  if (S.season === NOW_SEASON && age > SCHEDULE_MAX_AGE && Date.now() - (S.lastSchedTry || 0) > 120e3) {
+    S.lastSchedTry = Date.now();
+    try { await refreshSchedule(true); } catch (e) {}
   }
   if (tok !== S.token) return;
-  await pollLive();
-  if (S.games.filter(g => g.played).length !== before) { S.fpPromise = null; S.agg = null; S.standings = null; ensureFP(); }
+  await pollLive();                                   // tiny score feed, live games only
+  if (applyLiveFinals()) {                            // a game just finished: add it to Fantasy Points
+    S.fpPromise = null; S.agg = null; S.standings = null; S.players = { Accumulated: null, PerGame: null }; ensureFP();
+  }
   if (S.tab === "games") renderGames();
-  refreshOpenGame();
+  refreshOpenGame();                                  // box score only if you have a live game open
 }
 const roundKey = (g) => g.phase + "|" + g.round;
 const roundLabel = (k) => { const g = S.games.find(x => roundKey(x) === k); if (!g) return ""; return g.phase === "RS" ? "Round " + g.round : (g.phaseName + " · " + (g.roundName || g.round)); };
@@ -603,7 +636,7 @@ function defaultRound() {
   if (!started && new Date(firstOpen.date) - Date.now() > 2 * 864e5) { const prev = rounds[rounds.indexOf(k) - 1]; if (prev) return prev; }
   return k;
 }
-const liveCandidates = () => S.games.filter(g => !g.played && Date.now() >= new Date(g.date).getTime() - 10 * 60e3 && Date.now() - new Date(g.date).getTime() < 4 * 3600e3);
+const liveCandidates = () => S.games.filter(g => !g.played && Date.now() >= new Date(g.date).getTime() - 10 * 60e3 && Date.now() - new Date(g.date).getTime() < 6 * 3600e3);
 async function pollLive() {
   await Promise.all(liveCandidates().map(async g => {
     try { S.live.set(g.code, await getJSON("live", `/api/Header?gamecode=${g.code}&seasoncode=${COMP}${S.season}`)); } catch (e) {}
@@ -614,7 +647,7 @@ function gameState(g) {
   if (g.played) return "final";
   const L = S.live.get(g.code);
   if (L && L.Live) return "live";
-  if (L && n(L.ScoreA) + n(L.ScoreB) > 0) return "ended";
+  if (L && n(L.ScoreA) + n(L.ScoreB) > 0) return headerFinal(L) ? "ended" : "live";
   const start = new Date(g.date).getTime(), now = Date.now();
   if (now >= start && now - start < 4 * 3600e3) return "starting";
   return "upcoming";
@@ -697,6 +730,15 @@ async function openGame(code) {
   try { const b = await loadBox(S.season, code, st === "final"); if (openGameCode === code) renderBox(g, b); }
   catch (e) { $("#gbody").innerHTML = `<div class="err">The box score isn't available yet (${esc(e.message)}).</div>`; }
 }
+async function refreshGameNow(code, btn) {
+  const g = S.games.find(x => x.code === code); if (!g) return;
+  btn.disabled = true; btn.textContent = "Refreshing…";
+  try { S.live.set(code, await getJSON("live", `/api/Header?gamecode=${code}&seasoncode=${COMP}${S.season}`)); } catch (e) {}
+  if (applyLiveFinals()) { S.fpPromise = null; S.agg = null; S.standings = null; S.players = { Accumulated: null, PerGame: null }; ensureFP(); }
+  try { const b = await loadBox(S.season, code, g.played); if (openGameCode === code && $("#gbody")) renderBox(g, b); }
+  catch (e) { btn.disabled = false; btn.textContent = "↻ Refresh"; }
+  if (S.tab === "games") renderGames();
+}
 async function refreshOpenGame() {
   if (openGameCode == null || !$("#gbody")) return;
   const g = S.games.find(x => x.code === openGameCode);
@@ -712,7 +754,10 @@ function renderBox(g, b) {
   if (!b.teams.length) { $("#gbody").innerHTML = '<div class="empty">No box score yet.</div>'; return; }
   const live = b.live || gameState(g) === "live";
   const ended = !live && !g.played;
-  const mid = live ? `<span class="pill live">Live${L?.Quarter ? " · Q" + esc(L.Quarter) : ""} ${esc(L?.RemainingPartialTime || "")}</span>` : `<span class="pill final">${ended ? "Ended · confirming" : "Final"}</span>`;
+  const mid = live ? `<span class="pill live">Live${L?.Quarter ? " · Q" + esc(L.Quarter) : ""} ${esc(L?.RemainingPartialTime || "")}</span>
+      <button class="btn" data-refreshgame="${g.code}" style="padding:5px 12px;font-size:13px">↻ Refresh</button>
+      <span class="sub" style="font-size:12px">Updated ${tf.format(new Date())} · auto every ${LIVE_REFRESH_MS / 1000} s</span>`
+    : `<span class="pill final">${ended ? "Ended · confirming" : "Final"}</span>`;
   const hs = b.teams[0]?.tot?.pts ?? g.home.score, as = b.teams[1]?.tot?.pts ?? g.away.score;
   // quarters
   const q = b.quarters, qk = q[0]?.q.map(x => x[0]) || [];
@@ -1014,8 +1059,9 @@ function openInfo() {
 
 /* ================= events ================= */
 document.addEventListener("click", (e) => {
-  const t = e.target.closest("[data-conntest],[data-copyreport],[data-retry],[data-tab],[data-game],[data-player],[data-mode],[data-sort],[data-sortby],[data-close],[data-back],[data-info],[data-hist],[data-histmore],[data-h2h],[data-rnav]");
+  const t = e.target.closest("[data-refreshgame],[data-conntest],[data-copyreport],[data-retry],[data-tab],[data-game],[data-player],[data-mode],[data-sort],[data-sortby],[data-close],[data-back],[data-info],[data-hist],[data-histmore],[data-h2h],[data-rnav]");
   if (!t) return;
+  if (t.dataset.refreshgame) return refreshGameNow(+t.dataset.refreshgame, t);
   if (t.hasAttribute("data-conntest")) return $("#conn-out") ? runConnTest() : openConnTest();
   if (t.hasAttribute("data-copyreport")) {
     const ta = $("#conn-report"); if (!ta) return;
