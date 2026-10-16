@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0d1b2a">
 <meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Silkiu Magnatai">
 <title>Silkiu Magnatai Fantasy Analytics App</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,7 +55,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .top .wrap{display:flex;align-items:center;gap:14px;padding-block:12px}
 .brand{display:flex;align-items:center;gap:12px;margin-right:auto;min-width:0}
 .mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#f3c04f,#c98a14);display:grid;place-items:center;color:#1a1204;flex:none}
-.mark svg{width:26px;height:26px}
+.mark svg{width:36px;height:36px}
 .brand-txt{min-width:0;line-height:1.1}
 .brand-txt b{display:block;font:700 18px/1.1 var(--display);letter-spacing:.01em;white-space:nowrap}
 .brand-txt span{display:block;font-size:12px;color:#a9b8cc;letter-spacing:.06em;text-transform:uppercase;font-weight:600;white-space:nowrap}
@@ -217,8 +221,10 @@ tr.oncourt td:first-child{box-shadow:inset 3px 0 0 var(--live)}
 .err{text-align:left;color:var(--ink);border-color:var(--loss)}
 .err code{background:var(--surface-2);padding:2px 6px;border-radius:5px}
 .loading{color:var(--muted);padding:24px 0;font-weight:600}
-.rules td{padding:8px 10px}
-.rules td:last-child{font-weight:800}
+.rules{table-layout:fixed}
+.rules td{padding:10px 12px;white-space:normal;line-height:1.35}
+.rules td:first-child{position:static;width:auto}
+.rules td:last-child{width:72px;text-align:right;font-weight:800;font-size:15px;white-space:nowrap}
 footer{color:var(--muted);font-size:12px;padding-block:24px 32px;border-top:1px solid var(--line)}
 
 /* phone: tabs become a bottom bar */
@@ -239,7 +245,7 @@ footer{color:var(--muted);font-size:12px;padding-block:24px 32px;border-top:1px 
 <header class="top">
   <div class="wrap">
     <div class="brand">
-      <div class="mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M2.5 16c4.2-6.4 11.6-9.3 18.6-7.2L28 4.5l-1.6 7.2L29 16l-2.6 4.3L28 27.5l-6.9-4.3C14.1 25.3 6.7 22.4 2.5 16z" fill="currentColor"/><circle cx="20.5" cy="14.2" r="1.7" fill="#f3c04f"/><path d="M11 12.5c1.2 2.2 1.2 4.8 0 7" stroke="#f3c04f" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="mark" aria-hidden="true"><svg viewBox="0 0 64 64"><g transform="translate(-1.5 1)"><g stroke="#1a1204" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><path d="M43 28h4.5a6 6 0 0 1 6 6v7a6 6 0 0 1-6 6H43" fill="none"/><path d="M17 21h26v29a6 6 0 0 1-6 6H23a6 6 0 0 1-6-6z" fill="#fff6dc"/></g><path d="M20.5 28h19v21.5a3.5 3.5 0 0 1-3.5 3.5H24a3.5 3.5 0 0 1-3.5-3.5z" fill="#e0861c"/><path d="M20.5 28h19v4h-19z" fill="#f2a83a"/><g fill="#ffd796"><circle cx="26" cy="44" r="1.6"/><circle cx="32" cy="38" r="1.3"/><circle cx="29" cy="49" r="1.2"/><circle cx="34.5" cy="46" r="1.5"/></g><path d="M14.5 24.5c-1.6-4.6 2.3-8.6 6.4-7.4 1.1-4.4 7.4-5.6 10-1.7 3.1-3.1 9.4-1.3 9.4 3.3 3.6-.4 6 3.6 4.1 6.7-.5.9-1.4 1.6-2.4 1.6H17.6c-1.4 0-2.6-1-3.1-2.5z" fill="#ffffff" stroke="#1a1204" stroke-width="3" stroke-linejoin="round"/><path d="M23 34v14" stroke="#ffffff" stroke-opacity=".45" stroke-width="2.4" stroke-linecap="round"/></g></svg></div>
       <div class="brand-txt"><b>Silkiu Magnatai</b><span>Fantasy Analytics App</span></div>
     </div>
     <nav class="tabs" role="tablist" aria-label="Sections">
