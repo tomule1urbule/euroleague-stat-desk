@@ -450,12 +450,8 @@ async function fresh(key, fetcher) {
 }
 function markOnline(key) { if (S.staleKeys.delete(key)) paintStale(); }
 function paintStale() {
-  const el = $("#stale"); if (!el) return;
-  if (!S.staleKeys.size) { el.hidden = true; el.innerHTML = ""; return; }
-  const t = Math.min(...S.staleKeys.values()), d = new Date(t);
-  const when = (Date.now() - t < 864e5 ? "" : dtf.format(d) + ", ") + tf.format(d);
-  el.hidden = false;
-  el.innerHTML = `<div class="prog card" role="status"><span><b>Can't reach EuroLeague right now.</b> Showing data saved at ${when}. The app keeps trying in the background.</span><button class="btn" data-retry>Try now</button><button class="btn" data-conntest>Test</button></div>`;
+  // Saved data is shown silently when loading fails; background retries continue via tick().
+  const el = $("#stale"); if (el) { el.hidden = true; el.innerHTML = ""; }
 }
 async function loadPlayers(mode) {
   if (S.players[mode]) return S.players[mode];
