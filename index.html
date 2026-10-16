@@ -455,7 +455,7 @@ function paintStale() {
   const t = Math.min(...S.staleKeys.values()), d = new Date(t);
   const when = (Date.now() - t < 864e5 ? "" : dtf.format(d) + ", ") + tf.format(d);
   el.hidden = false;
-  el.innerHTML = `<div class="prog card" role="status"><span><b>Can't reach EuroLeague right now.</b> Showing data saved at ${when}. The app keeps trying in the background.</span><button class="btn" data-retry>Try now</button></div>`;
+  el.innerHTML = `<div class="prog card" role="status"><span><b>Can't reach EuroLeague right now.</b> Showing data saved at ${when}. The app keeps trying in the background.</span><button class="btn" data-retry>Try now</button><button class="btn" data-conntest>Test</button></div>`;
 }
 async function loadPlayers(mode) {
   if (S.players[mode]) return S.players[mode];
@@ -634,7 +634,7 @@ function showError(e) {
   $("#main").innerHTML = `<div class="err"><b>Couldn't reach the EuroLeague API.</b><p>${esc(e.message || e)}</p>` +
     (fileMode ? `<p>Your browser blocked a direct call from a local file. In this folder run <code>node server.js</code>, then open <code>http://localhost:8787</code>.</p>`
               : `<p>The EuroLeague server didn't answer, even after several tries. This is usually brief.</p>`) +
-    `<button class="btn primary" data-retry>Try again</button></div>`;
+    `<div class="row"><button class="btn primary" data-retry>Try again</button><button class="btn" data-conntest>Run connection test</button></div></div>`;
 }
 const modeSeg = () => `<div class="seg" role="group" aria-label="Stat mode"><button data-mode="PerGame" aria-pressed="${S.mode === "PerGame"}">Per game</button><button data-mode="Accumulated" aria-pressed="${S.mode === "Accumulated"}">Season totals</button></div>`;
 
@@ -965,18 +965,68 @@ async function renderStandings() {
     <div class="legend"><span><span class="zone po">1</span> Playoffs (1–6)</span><span><span class="zone pi">7</span> Play-in (7–10)</span></div>${st.computed ? '<p class="note">The official standings didn\'t load, so this table is calculated from game results. Teams level on wins are ordered by point difference, which can differ from the official tiebreakers.</p>' : ""}`;
 }
 
+/* ================= connection test ================= */
+// For each address: a normal request (what the app does) and a "no-cors" probe. If the probe gets through but the
+// normal request fails, the server answered but its reply was unusable (e.g. a protection page or rate limit).
+async function probe(url, mode) {
+  const ac = new AbortController(), t0 = performance.now(), timer = setTimeout(() => ac.abort(), 12000);
+  try {
+    const r = await fetch(url, { mode, cache: "no-store", signal: ac.signal });
+    let size = "";
+    if (mode === "cors") { const b = await r.text(); size = ` · ${Math.round(b.length / 1024)} KB`; }
+    return { ok: mode === "cors" ? r.ok : true, msg: mode === "cors" ? `HTTP ${r.status}${size}` : "reachable", ms: Math.round(performance.now() - t0) };
+  } catch (e) { return { ok: false, msg: e.name === "AbortError" ? "timed out after 12 s" : `${e.name}: ${e.message}`, ms: Math.round(performance.now() - t0) }; }
+  finally { clearTimeout(timer); }
+}
+async function runConnTest() {
+  const out = $("#conn-out"); if (!out) return;
+  const tests = [
+    ["EuroLeague stats server", `${HOSTS.api}/v2/competitions/${COMP}/seasons/${COMP}${NOW_SEASON}/games?roundNumber=1`],
+    ["EuroLeague live feed", `${HOSTS.live}/api/Header?gamecode=1&seasoncode=${COMP}${NOW_SEASON}`],
+    ["Control (GitHub)", "https://api.github.com/zen"],
+  ];
+  const lines = [`Silkiu Magnatai connection test · ${new Date().toISOString()}`, `Online: ${navigator.onLine} · Network: ${navigator.connection?.effectiveType || "unknown"}`, `Browser: ${navigator.userAgent}`, ""];
+  const rows = [];
+  out.innerHTML = '<div class="loading">Testing… this takes up to 30 seconds.</div>';
+  for (const [name, url] of tests) {
+    const a = await probe(url, "cors"); let b = null, verdict;
+    if (a.ok) verdict = "Working";
+    else if (/^HTTP \d/.test(a.msg)) verdict = `Server refused the request (${a.msg.split(" ·")[0]})`;
+    else { b = await probe(url, "no-cors"); verdict = b.ok ? "Server answered, but the browser blocked the reply" : "Could not connect at all"; }
+    rows.push({ name, a, b, verdict });
+    lines.push(`${name}: ${verdict} | normal: ${a.msg} (${a.ms} ms)${b ? ` | probe: ${b.msg} (${b.ms} ms)` : ""}`);
+  }
+  const report = lines.join("\n");
+  out.innerHTML = `<div class="tframe" style="box-shadow:none"><table class="rules"><tbody>${rows.map(r => `<tr><td><b>${esc(r.name)}</b><br><span class="sub">${esc(r.a.msg)} · ${r.a.ms} ms</span></td><td class="${r.a.ok ? "pos" : "negv"}" style="width:auto;white-space:normal">${esc(r.verdict)}</td></tr>`).join("")}</tbody></table></div>
+    <p class="note">Send the report below to whoever maintains the app.</p>
+    <textarea id="conn-report" class="input" readonly rows="7" style="width:100%;font:12px/1.4 ui-monospace,monospace;margin-top:8px">${esc(report)}</textarea>
+    <div class="row" style="margin-top:10px"><button class="btn primary" data-copyreport>Copy report</button><button class="btn" data-conntest>Run again</button></div>`;
+}
+function openConnTest() {
+  openGameCode = null;
+  sheet("Connection test", `<section class="card box"><h3>Connection test</h3><p class="sub" style="margin-top:-4px">Checks whether this phone can reach the EuroLeague servers right now, and what kind of problem it is if not.</p><div id="conn-out"></div></section>`, openConnTest);
+  runConnTest();
+}
+
 /* ================= info sheet ================= */
 function openInfo() {
   openGameCode = null;
   sheet("Fantasy Points", `<section class="card box"><h3>How Fantasy Points are counted</h3><p class="sub" style="margin-top:-4px">Every game, for every player who gets on the court.</p>
     <div class="tframe" style="box-shadow:none"><table class="rules"><tbody>${FP_RULES.map(([k, v]) => `<tr><td>${esc(k)}</td><td class="${v.startsWith("+") ? "pos" : "negv"}">${v}</td></tr>`).join("")}</tbody></table></div>
-    <p class="note">Only the highest multi-double bonus counts (a triple-double earns +30, not +40). The win or loss bonus is added once the game is final. Season Fantasy Points are the sum over every finished game.</p></section>`, openInfo);
+    <p class="note" style="margin-bottom:12px">Having trouble loading data? <button class="btn" data-conntest style="margin-left:6px">Run connection test</button></p><p class="note">Only the highest multi-double bonus counts (a triple-double earns +30, not +40). The win or loss bonus is added once the game is final. Season Fantasy Points are the sum over every finished game.</p></section>`, openInfo);
 }
 
 /* ================= events ================= */
 document.addEventListener("click", (e) => {
-  const t = e.target.closest("[data-retry],[data-tab],[data-game],[data-player],[data-mode],[data-sort],[data-sortby],[data-close],[data-back],[data-info],[data-hist],[data-histmore],[data-h2h],[data-rnav]");
+  const t = e.target.closest("[data-conntest],[data-copyreport],[data-retry],[data-tab],[data-game],[data-player],[data-mode],[data-sort],[data-sortby],[data-close],[data-back],[data-info],[data-hist],[data-histmore],[data-h2h],[data-rnav]");
   if (!t) return;
+  if (t.hasAttribute("data-conntest")) return $("#conn-out") ? runConnTest() : openConnTest();
+  if (t.hasAttribute("data-copyreport")) {
+    const ta = $("#conn-report"); if (!ta) return;
+    navigator.clipboard?.writeText(ta.value).then(() => { t.textContent = "Copied"; }, () => { ta.focus(); ta.select(); t.textContent = "Select and copy the text"; })
+      ?? (ta.focus(), ta.select());
+    return;
+  }
   if (t.hasAttribute("data-retry")) { if (!S.games.length || S.staleKeys.size) return loadSeason(); S.standings = null; return render(); }
   if (t.hasAttribute("data-close")) { if (e.target === t || t.tagName === "BUTTON") closeSheet(); return; }
   if (t.hasAttribute("data-histmore")) return renderHistory(t.dataset.histmore, t.dataset.opp, +t.dataset.back);
