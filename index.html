@@ -293,13 +293,32 @@ const store = {
 };
 
 /* ================= network ================= */
-async function getJSON(host, path) {
-  const tryUrl = async (u) => { const r = await fetch(u, { cache: "no-store" }); if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); };
-  if (!S.viaProxy) {
-    try { return await tryUrl(HOSTS[host] + path); }
-    catch (e) { if (location.protocol === "file:" || /github\.io$/.test(location.hostname)) throw e; S.viaProxy = true; }
+// At most 3 requests in flight at once, and up to 4 attempts per request with growing pauses,
+// so bursts (e.g. reading every box score) don't trip the API's rate limits.
+const MAX_INFLIGHT = 3, RETRY_DELAYS = [700, 1800, 4000];
+let inflight = 0; const waiters = [];
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+async function slot() { if (inflight < MAX_INFLIGHT) { inflight++; return; } await new Promise(r => waiters.push(r)); inflight++; }
+function release() { inflight--; const w = waiters.shift(); if (w) w(); }
+async function fetchJSON(u) {
+  await slot();
+  try { const r = await fetch(u, { cache: "no-store" }); if (!r.ok) { const e = new Error("HTTP " + r.status); e.status = r.status; throw e; } return await r.json(); }
+  finally { release(); }
+}
+async function withRetry(u) {
+  let last;
+  for (let i = 0; i <= RETRY_DELAYS.length; i++) {
+    try { return await fetchJSON(u); }
+    catch (e) { last = e; if (e.status === 404 || i === RETRY_DELAYS.length) break; await sleep(RETRY_DELAYS[i] + Math.random() * 400); }
   }
-  return tryUrl("/proxy/" + host + path);
+  throw last;
+}
+async function getJSON(host, path) {
+  if (!S.viaProxy) {
+    try { return await withRetry(HOSTS[host] + path); }
+    catch (e) { if (location.protocol === "file:" || /github\.io$/.test(location.hostname) || location.protocol === "https:") throw e; S.viaProxy = true; }
+  }
+  return withRetry("/proxy/" + host + path);
 }
 async function pool(items, size, fn) {
   let i = 0;
@@ -443,9 +462,33 @@ async function loadStandings() {
   if (S.standings) return S.standings;
   const rs = S.games.filter(g => g.phase === "RS" && g.played).map(g => g.round);
   const r = rs.length ? Math.max(...rs) : 1;
-  const d = await getJSON("api", `/v3/competitions/${COMP}/seasons/${COMP}${S.season}/rounds/${r}/basicstandings`);
-  S.standings = { round: r, teams: d.teams || [] };
+  for (const rr of [r, r - 1]) {
+    if (rr < 1) continue;
+    try {
+      const d = await getJSON("api", `/v3/competitions/${COMP}/seasons/${COMP}${S.season}/rounds/${rr}/basicstandings`);
+      if (d.teams?.length) { S.standings = { round: rr, teams: d.teams }; return S.standings; }
+    } catch (e) {}
+  }
+  S.standings = { round: r, teams: computeStandings(), computed: true };
   return S.standings;
+}
+// Fallback: build the table from finished regular-season results (wins, then point difference).
+function computeStandings() {
+  const T = new Map();
+  const get = (c) => { if (!T.has(c.code)) T.set(c.code, { club: { code: c.code, name: c.name, images: { crest: c.crest } }, w: 0, l: 0, pf: 0, pa: 0, hw: 0, hl: 0, aw: 0, al: 0, res: [] }); return T.get(c.code); };
+  for (const g of S.games.filter(g => g.phase === "RS")) {
+    const h = get(g.home), a = get(g.away);
+    if (!g.played) continue;
+    const hw = g.home.score > g.away.score;
+    h.pf += g.home.score; h.pa += g.away.score; a.pf += g.away.score; a.pa += g.home.score;
+    if (hw) { h.w++; h.hw++; a.l++; a.al++; } else { a.w++; a.aw++; h.l++; h.hl++; }
+    h.res.push(hw ? "W" : "L"); a.res.push(hw ? "L" : "W");
+  }
+  return [...T.values()].sort((x, y) => y.w - x.w || (y.pf - y.pa) - (x.pf - x.pa)).map((t, i) => {
+    const gp = t.w + t.l, d = t.pf - t.pa;
+    return { position: i + 1, gamesPlayed: gp, gamesWon: t.w, gamesLost: t.l, club: t.club, winPercentage: gp ? Math.round(100 * t.w / gp) + "%" : "0%",
+      pointsDifference: (d > 0 ? "+" : "") + d, pointsFor: t.pf, pointsAgainst: t.pa, homeRecord: `${t.hw}-${t.hl}`, awayRecord: `${t.aw}-${t.al}`, last5Form: t.res.slice(-5) };
+  });
 }
 
 /* ===== season Fantasy Points: built from every finished game's box score ===== */
@@ -454,7 +497,7 @@ function ensureFP() {
   const tok = S.token, played = S.games.filter(g => g.played);
   S.fpProg = { done: 0, total: played.length };
   S.fpPromise = (async () => {
-    await pool(played, 6, async g => {
+    await pool(played, 2, async g => {
       try { await loadBox(S.season, g.code, true); } catch (e) {}
       if (tok !== S.token) return;
       S.fpProg.done++; paintProgress();
@@ -567,7 +610,8 @@ function showError(e) {
   const fileMode = location.protocol === "file:";
   $("#main").innerHTML = `<div class="err"><b>Couldn't reach the EuroLeague API.</b><p>${esc(e.message || e)}</p>` +
     (fileMode ? `<p>Your browser blocked a direct call from a local file. In this folder run <code>node server.js</code>, then open <code>http://localhost:8787</code>.</p>`
-              : `<p>Check your connection and reload the page.</p>`) + `</div>`;
+              : `<p>The EuroLeague server didn't answer, even after several tries. This is usually brief.</p>`) +
+    `<button class="btn primary" data-retry>Try again</button></div>`;
 }
 const modeSeg = () => `<div class="seg" role="group" aria-label="Stat mode"><button data-mode="PerGame" aria-pressed="${S.mode === "PerGame"}">Per game</button><button data-mode="Accumulated" aria-pressed="${S.mode === "Accumulated"}">Season totals</button></div>`;
 
@@ -891,11 +935,11 @@ async function renderStandings() {
   $("#main").innerHTML = '<div class="loading">Loading standings…</div>';
   let st; try { st = await loadStandings(); } catch (e) { return showError(e); }
   if (S.tab !== "standings") return;
-  $("#main").innerHTML = `<div class="sec-h"><h2>Standings</h2><span class="sub">After round ${st.round}</span></div>
+  $("#main").innerHTML = `<div class="sec-h"><h2>Standings</h2><span class="sub">After round ${st.round}${st.computed ? " · calculated from results" : ""}</span></div>
     <div class="tframe"><table><thead><tr><th>Team</th><th>GP</th><th>W</th><th>L</th><th>Win%</th><th>PF</th><th>PA</th><th>Diff</th><th>Home</th><th>Away</th><th class="l">Last 5</th></tr></thead><tbody>
     ${st.teams.map(t => `<tr><td><div class="pn"><span class="zone ${t.position <= 6 ? "po" : t.position <= 10 ? "pi" : ""}">${t.position}</span><img class="crest" src="${esc(t.club.images?.crest)}" alt=""><b>${esc(t.club.name)}</b></div></td><td>${t.gamesPlayed}</td><td class="key">${t.gamesWon}</td><td>${t.gamesLost}</td><td>${esc(t.winPercentage)}</td><td>${t.pointsFor}</td><td>${t.pointsAgainst}</td><td class="${String(t.pointsDifference).startsWith("-") ? "negv" : "pos"}">${esc(t.pointsDifference)}</td><td>${esc(t.homeRecord)}</td><td>${esc(t.awayRecord)}</td><td class="l">${formHtml(t.last5Form)}</td></tr>`).join("")}
     </tbody></table></div>
-    <div class="legend"><span><span class="zone po">1</span> Playoffs (1–6)</span><span><span class="zone pi">7</span> Play-in (7–10)</span></div>`;
+    <div class="legend"><span><span class="zone po">1</span> Playoffs (1–6)</span><span><span class="zone pi">7</span> Play-in (7–10)</span></div>${st.computed ? '<p class="note">The official standings didn\'t load, so this table is calculated from game results. Teams level on wins are ordered by point difference, which can differ from the official tiebreakers.</p>' : ""}`;
 }
 
 /* ================= info sheet ================= */
@@ -908,8 +952,9 @@ function openInfo() {
 
 /* ================= events ================= */
 document.addEventListener("click", (e) => {
-  const t = e.target.closest("[data-tab],[data-game],[data-player],[data-mode],[data-sort],[data-sortby],[data-close],[data-back],[data-info],[data-hist],[data-histmore],[data-h2h],[data-rnav]");
+  const t = e.target.closest("[data-retry],[data-tab],[data-game],[data-player],[data-mode],[data-sort],[data-sortby],[data-close],[data-back],[data-info],[data-hist],[data-histmore],[data-h2h],[data-rnav]");
   if (!t) return;
+  if (t.hasAttribute("data-retry")) { if (!S.games.length) return loadSeason(); S.standings = null; return render(); }
   if (t.hasAttribute("data-close")) { if (e.target === t || t.tagName === "BUTTON") closeSheet(); return; }
   if (t.hasAttribute("data-histmore")) return renderHistory(t.dataset.histmore, t.dataset.opp, +t.dataset.back);
   if (t.hasAttribute("data-back")) return back();
