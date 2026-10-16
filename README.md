@@ -1,6 +1,6 @@
-# EuroLeague Stat Desk
+# Silkiu Magnatai Fantasy Analytics App
 
-Live EuroLeague fantasy stats on one page: results, live games with box scores, upcoming fixtures, season leaders, every player's game log with PIR, and standings.
+Silkiu Magnatai Fantasy Analytics App: live EuroLeague stats with custom Fantasy Points. Results, live games with box scores, upcoming fixtures, season leaders, every player's game log, history against any opponent over past seasons, and standings.
 
 **Open it:** https://tomule1urbule.github.io/euroleague-stat-desk/
 
