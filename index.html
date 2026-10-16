@@ -552,6 +552,7 @@ function gameState(g) {
   if (g.played) return "final";
   const L = S.live.get(g.code);
   if (L && L.Live) return "live";
+  if (L && n(L.ScoreA) + n(L.ScoreB) > 0) return "ended";
   const start = new Date(g.date).getTime(), now = Date.now();
   if (now >= start && now - start < 4 * 3600e3) return "starting";
   return "upcoming";
@@ -573,14 +574,16 @@ const modeSeg = () => `<div class="seg" role="group" aria-label="Stat mode"><but
 /* ================= games ================= */
 function gameCard(g) {
   const st = gameState(g), L = S.live.get(g.code);
-  const hs = st === "live" ? n(L.ScoreA) : g.home.score, as = st === "live" ? n(L.ScoreB) : g.away.score;
-  const showScore = st === "final" || st === "live";
+  const liveish = st === "live" || st === "ended";
+  const hs = liveish ? n(L.ScoreA) : g.home.score, as = liveish ? n(L.ScoreB) : g.away.score;
+  const showScore = st === "final" || liveish;
   const hl = showScore && hs < as, al = showScore && as < hs;
   const time = new Date(g.date);
   let pill = `<span class="pill">${tf.format(time)}</span>`;
   if (st === "final") pill = `<span class="pill final">Final</span>`;
   if (st === "live") pill = `<span class="pill live">Live${L.Quarter ? " · Q" + esc(L.Quarter) : ""} ${esc(L.RemainingPartialTime || "")}</span>`;
   if (st === "starting") pill = `<span class="pill">Tip-off ${tf.format(time)}</span>`;
+  if (st === "ended") pill = `<span class="pill final">Ended · confirming</span>`;
   const row = (c, s, lost) => `<div class="g-row ${lost ? "lost" : ""}"><img class="crest" src="${esc(c.crest)}" alt="" loading="lazy"><span class="g-name">${esc(c.name)}</span><span class="g-score">${showScore ? s : ""}</span></div>`;
   const top = st === "final" ? S.gameTop.get(g.code) : null;
   const foot = top ? `<div class="g-foot"><span>Top FP · <b>${esc(top.name)}</b></span>${fpChip(top.fp)}</div>`
@@ -592,7 +595,7 @@ function gameCard(g) {
 function renderGames() {
   if (S.tab !== "games") return;
   const rounds = [...new Set(S.games.map(roundKey))], i = rounds.indexOf(S.round);
-  const live = S.games.filter(g => gameState(g) === "live");
+  const live = S.games.filter(g => ["live", "ended"].includes(gameState(g)));
   const inRound = S.games.filter(g => roundKey(g) === S.round);
   const byDay = new Map();
   for (const g of inRound) { const k = dtf.format(new Date(g.date)); if (!byDay.has(k)) byDay.set(k, []); byDay.get(k).push(g); }
@@ -634,7 +637,7 @@ async function openGame(code) {
 async function refreshOpenGame() {
   if (openGameCode == null || !$("#gbody")) return;
   const g = S.games.find(x => x.code === openGameCode);
-  if (!g || gameState(g) !== "live") return;
+  if (!g || !["live", "ended"].includes(gameState(g))) return;
   try { const b = await loadBox(S.season, openGameCode, false); if ($("#gbody")) renderBox(g, b); } catch (e) {}
 }
 function matchHead(g, hs, as, mid) {
@@ -645,7 +648,8 @@ function renderBox(g, b) {
   const L = S.live.get(g.code);
   if (!b.teams.length) { $("#gbody").innerHTML = '<div class="empty">No box score yet.</div>'; return; }
   const live = b.live || gameState(g) === "live";
-  const mid = live ? `<span class="pill live">Live${L?.Quarter ? " · Q" + esc(L.Quarter) : ""} ${esc(L?.RemainingPartialTime || "")}</span>` : `<span class="pill final">Final</span>`;
+  const ended = !live && !g.played;
+  const mid = live ? `<span class="pill live">Live${L?.Quarter ? " · Q" + esc(L.Quarter) : ""} ${esc(L?.RemainingPartialTime || "")}</span>` : `<span class="pill final">${ended ? "Ended · confirming" : "Final"}</span>`;
   const hs = b.teams[0]?.tot?.pts ?? g.home.score, as = b.teams[1]?.tot?.pts ?? g.away.score;
   // quarters
   const q = b.quarters, qk = q[0]?.q.map(x => x[0]) || [];
@@ -844,7 +848,7 @@ async function openPlayer(code, opts = {}) {
   await ensureFP();
   if (!$("#glog")) return;
   if ($("#fptiles")) $("#fptiles").innerHTML = fpTiles();
-  const games = S.games.filter(g => (g.home.code === team || g.away.code === team) && (g.played || gameState(g) === "live"));
+  const games = S.games.filter(g => (g.home.code === team || g.away.code === team) && (g.played || ["live", "ended"].includes(gameState(g))));
   const out = [];
   await pool(games, 6, async g => {
     try {
@@ -926,6 +930,7 @@ document.addEventListener("change", (e) => {
   if (e.target.id === "season") { S.season = +e.target.value; closeSheet(); loadSeason(); }
 });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && S.games.length) tick(); });
 
 $("#season").innerHTML = SEASONS.map(y => `<option value="${y}">${seasonLabel(y)}</option>`).join("");
 loadSeason();
