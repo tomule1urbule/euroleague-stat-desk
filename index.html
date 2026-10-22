@@ -120,6 +120,9 @@ select.input,input.input{background:var(--surface);border:1px solid var(--line-2
 .g-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding-top:10px;font-size:13px;color:var(--muted)}
 .g-foot b{color:var(--ink);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .livestrip{margin-bottom:28px}
+.part-h{font:700 16px var(--display);margin:6px 0 12px;padding-top:6px}
+.part-h + .day{margin-top:0}
+.day + .part-h{border-top:1px solid var(--line);padding-top:20px;margin-top:4px}
 .livestrip h2{color:var(--live)}
 
 /* leaders */
@@ -731,8 +734,12 @@ function renderGames() {
   const live = S.games.filter(g => ["live", "ended"].includes(gameState(g)));
   const liveCodes = new Set(live.map(g => g.code));
   const inRoundAll = S.games.filter(g => roundKey(g) === S.round), inRound = inRoundAll.filter(g => !liveCodes.has(g.code));
-  const byDay = new Map();
-  for (const g of inRound) { const k = dtf.format(new Date(g.date)); if (!byDay.has(k)) byDay.set(k, []); byDay.get(k).push(g); }
+  // Upcoming games first (soonest at the top), finished games below (most recent first).
+  const groupByDay = (list) => { const m = new Map(); for (const g of list) { const k = dtf.format(new Date(g.date)); if (!m.has(k)) m.set(k, []); m.get(k).push(g); } return [...m]; };
+  const upcomingList = inRound.filter(g => !g.played).sort((a, b) => new Date(a.date) - new Date(b.date));
+  const finishedList = inRound.filter(g => g.played).sort((a, b) => new Date(b.date) - new Date(a.date));
+  const dayBlocks = (list) => groupByDay(list).map(([d, gs]) => `<div class="day"><h3>${esc(d)}</h3><div class="grid">${gs.map(gameCard).join("")}</div></div>`).join("");
+  const showHeads = upcomingList.length && finishedList.length;
   const nextUp = S.games.find(g => gameState(g) === "upcoming");
   $("#main").innerHTML =
     (live.length ? `<section class="livestrip"><div class="sec-h"><h2>Live now</h2><span class="sub">Updates every ${LIVE_REFRESH_MS / 1000} seconds</span></div><div class="grid">${live.map(gameCard).join("")}</div></section>` : "") +
@@ -741,7 +748,8 @@ function renderGames() {
         <strong>${esc(roundLabel(S.round))}</strong>
         <button class="btn" data-rnav="1" ${i >= rounds.length - 1 ? "disabled" : ""} aria-label="Next round">›</button></div>
       <span class="sub">${inRoundAll.filter(g => g.played).length} of ${inRoundAll.length} played${liveCodes.size && inRoundAll.some(g => liveCodes.has(g.code)) ? ` · ${inRoundAll.filter(g => liveCodes.has(g.code)).length} live above` : ""}${nextUp ? " · next tip-off " + dtf.format(new Date(nextUp.date)) + ", " + tf.format(new Date(nextUp.date)) : ""}</span></div>
-      ${[...byDay].map(([d, gs]) => `<div class="day"><h3>${esc(d)}</h3><div class="grid">${gs.map(gameCard).join("")}</div></div>`).join("") || `<div class="empty">${inRoundAll.length ? "This round's games are live above." : "No games in this round."}</div>`}
+      ${(upcomingList.length ? (showHeads ? '<h3 class="part-h">Upcoming</h3>' : "") + dayBlocks(upcomingList) : "") +
+        (finishedList.length ? (showHeads ? '<h3 class="part-h">Results</h3>' : "") + dayBlocks(finishedList) : "") || `<div class="empty">${inRoundAll.length ? "This round's games are live above." : "No games in this round."}</div>`}
     </section>`;
 }
 
