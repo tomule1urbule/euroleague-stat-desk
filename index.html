@@ -315,6 +315,7 @@ body.mt-dragging,body.mt-dragging *{cursor:grabbing!important}
 .mt-menu button{border:0;background:none;text-align:left;padding:13px 12px;border-radius:10px;font-weight:700;font-size:15px}
 .mt-menu button:hover{background:var(--surface-2)}
 .mt-menu button.danger{color:var(--loss)}
+.mt-menu button.cap{color:var(--gold)}
 .mt-menu button.cancel{color:var(--muted);text-align:center;border-top:1px solid var(--line);border-radius:0 0 10px 10px}
 .mt-ed{display:flex;flex-direction:column;gap:14px}
 .mt-chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -994,11 +995,11 @@ function renderBox(g, b) {
   // Your My Team players in this game, using the lineup for this game's round
   const mt = myTeamFor(roundKey(g)), mineRows = [];
   if (mt) b.teams.forEach((T, ti) => { const res = live ? null : resultFor(g, teamOf(g, b, ti));
-    for (const l of T.players) { const slot = mt.mine.get(l.code); if (slot) mineRows.push({ l, slot, pts: l.sec ? fp(l, res) * mtMult(slot, mt.e) : 0 }); } });
-  const order = (sl) => POS.indexOf(sl);
-  mineRows.sort((a, b2) => order(a.slot) - order(b2.slot));
+    for (const l of T.players) { const slot = mt.mine.get(l.code); if (slot) mineRows.push({ l, slot, cap: l.code === mt.e.cap, pts: l.sec ? fp(l, res) * mtMult(slot, mt.e, l.code) : 0 }); } });
+  const order = (r) => r.cap ? -1 : POS.indexOf(r.slot);
+  mineRows.sort((a, b2) => order(a) - order(b2));
   const mineHtml = mt && mineRows.length ? `<div class="mine-sum card"><div class="lab">Your team · ${esc(roundLabel(roundKey(g)))}</div>
-      <div class="mine-list">${mineRows.map(r => `<span class="mine-it" data-player="${esc(r.l.code)}">${mineBadge(r.slot)}<b>${esc(nice(r.l.name))}</b><em class="${r.pts < 0 ? "negv" : ""}">${r.l.sec ? f1(r.pts) : "DNP"}</em></span>`).join("")}</div>
+      <div class="mine-list">${mineRows.map(r => `<span class="mine-it" data-player="${esc(r.l.code)}">${mineBadge(r.slot, r.cap)}<b>${esc(nice(r.l.name))}</b><em class="${r.pts < 0 ? "negv" : ""}">${r.l.sec ? f1(r.pts) : "DNP"}</em></span>`).join("")}</div>
       <div class="mine-tot">${f1(mineRows.reduce((s2, r) => s2 + r.pts, 0))} pts for you from this game${live ? " so far" : ""}</div></div>` : "";
   const mvpHtml = mvp ? `<div class="mvp card"><img class="crest" src="${esc((mvp.ti === 0 ? g.home : g.away).crest)}" alt="" width="36" height="36"><div style="flex:1;min-width:0"><div class="lab">${live ? "Fantasy leader so far" : "Fantasy MVP"}</div><b class="mvp-n">${esc(nice(mvp.l.name))}</b><div class="sub">${mvp.l.pts} pts · ${mvp.l.tr} reb · ${mvp.l.ast} ast</div></div>${fpChip(mvp.v, true)}</div>` : "";
   $("#gbody").innerHTML = `<div style="display:flex;flex-direction:column;gap:16px">` + matchHead(g, hs, as, mid) + bar + qt + mineHtml + mvpHtml +
@@ -1011,14 +1012,14 @@ function myTeamFor(rk) {
     return { e: me.e, mine: new Map(Object.entries(me.e.pos).map(([slot, code]) => [code, slot])) }; } catch (e) { return null; }
 }
 const MINE_LABEL = { c: ["C", "Captain"], s: ["S", "Starter"], x: ["6th", "6th man"], b: ["B", "Bench"], r: ["R", "Reserve"] };
-const mineBadge = (slot) => `<span class="mine-b mine-${slot[0]}" title="${MINE_LABEL[slot[0]][1]} in your team">${MINE_LABEL[slot[0]][0]}</span>`;
+const mineBadge = (slot, cap) => { const k = cap ? "c" : slot[0]; return `<span class="mine-b mine-${k}" title="${MINE_LABEL[k][1]} in your team">${MINE_LABEL[k][0]}</span>`; };
 function teamBox(T, club, res, mt) {
   const rows = T.players.map(l => ({ l, v: fp(l, res) }));
   const maxV = Math.max(...rows.filter(r => r.l.sec).map(r => r.v));
   const starters = rows.filter(r => r.l.st), bench = rows.filter(r => !r.l.st);
   const pm = (v) => v == null ? "" : `<span class="${v > 0 ? "pos" : v < 0 ? "negv" : ""}">${v > 0 ? "+" : ""}${v}</span>`;
   const line = ({ l, v }) => { const slot = mt?.mine.get(l.code); return `<tr class="click ${l.on ? "oncourt" : ""} ${slot ? "mine" : ""}" data-player="${esc(l.code)}">
-    <td><div class="pn"><span class="jn">${esc(l.dorsal)}</span><b>${esc(nice(l.name))}</b>${slot ? mineBadge(slot) : ""}</div></td>
+    <td><div class="pn"><span class="jn">${esc(l.dorsal)}</span><b>${esc(nice(l.name))}</b>${slot ? mineBadge(slot, l.code === mt.e.cap) : ""}</div></td>
     <td class="fpc">${l.sec ? f1(v) + (v === maxV ? " ★" : "") : "–"}</td>
     <td class="key">${l.pts}</td><td>${l.tr}</td><td>${l.ast}</td><td>${l.stl}</td><td>${l.blk}</td><td>${l.tov}</td><td>${mmss(l.sec)}</td>
     <td>${l.m2}/${l.a2}</td><td>${l.m3}/${l.a3}</td><td>${l.ftm}/${l.fta}</td><td>${l.or}</td><td>${l.dr}</td><td>${l.ba}</td><td>${l.pf}</td><td>${l.fd}</td><td>${l.pir}</td><td>${pm(l.pm)}</td></tr>`; };
@@ -1239,25 +1240,31 @@ async function renderHistory(code, opp, back) {
 // Step 1: pick up to 13 players (no positions). Step 2: drag them into boxes on the board.
 // Captain 200% (300% Triple Captain) · Starters 100% · 6th man 100% · Bench 50% (100% Bench Boost) · Reserve 0%.
 // DNP = 0. Multipliers apply to negative FP too. Every round has its own board; a new round starts from the previous one.
-const POS = ["c0", "s0", "s1", "s2", "s3", "x0", "b0", "b1", "b2", "b3", "r0", "r1", "r2"];
-const BOXES = [["c", "Captain", ["c0"]], ["s", "Starters", ["s0", "s1", "s2", "s3"]], ["x", "6th man", ["x0"]], ["b", "Bench", ["b0", "b1", "b2", "b3"]], ["r", "Reserve", ["r0", "r1", "r2"]]];
+// 5 starters (one of them is the captain, stored as e.cap), 6th man, 4 bench, 3 reserves
+const POS = ["s0", "s1", "s2", "s3", "s4", "x0", "b0", "b1", "b2", "b3", "r0", "r1", "r2"];
+const STARTERS = ["s0", "s1", "s2", "s3", "s4"];
 const SQUAD_MAX = 13;
 const MT = { round: null, tok: 0, lines: {}, linesRound: null, sel: null, pd: null, drag: null, justDragged: false, draft: null, q: "", pl: null };
 const mtKey = () => "myteam:" + S.season;
 const clone = (o) => JSON.parse(JSON.stringify(o));
 const mtSave = (d) => store.set(mtKey(), d);
 const mtRounds = () => [...new Set(S.games.map(roundKey))];
-function mtMigrate(e) {                       // earlier format {lu:{s[5],c,x,b[4],r[3]}} -> {squad, pos}
-  if (!e || e.pos) return e;
-  const lu = e.lu || {}, st = (lu.s || []).filter(Boolean), c = lu.c && st.includes(lu.c) ? lu.c : null, pos = {};
-  if (c) pos.c0 = c;
-  const rest = [];
-  st.filter(x => x !== c).forEach((x, i) => i < 4 ? pos["s" + i] = x : rest.push(x));
+function mtMigrate(e) {
+  if (!e || e.v === 3) return e;
+  if (e.pos) {                                  // v2: separate captain box c0 + 4 starters
+    const p = e.pos, pos = {}, st = [p.c0, p.s0, p.s1, p.s2, p.s3, p.s4].filter(Boolean);
+    st.slice(0, 5).forEach((x, i) => { pos["s" + i] = x; });
+    for (const k of ["x0", "b0", "b1", "b2", "b3", "r0", "r1", "r2"]) if (p[k]) pos[k] = p[k];
+    for (const x of st.slice(5)) { const free = POS.find(q => !pos[q]); if (free) pos[free] = x; }
+    const cap = p.c0 || (e.cap && st.includes(e.cap) ? e.cap : null);
+    return { squad: e.squad || Object.values(pos), pos, cap, bb: !!e.bb, tc: !!e.tc, asked: !!e.asked, v: 3 };
+  }
+  const lu = e.lu || {}, st = (lu.s || []).filter(Boolean), pos = {};   // v1: {lu:{s[5],c,x,b[4],r[3]}}
+  st.slice(0, 5).forEach((x, i) => { pos["s" + i] = x; });
   if (lu.x) pos.x0 = lu.x;
   (lu.b || []).forEach((x, i) => { if (x) pos["b" + i] = x; });
   (lu.r || []).forEach((x, i) => { if (x) pos["r" + i] = x; });
-  for (const x of rest) { const free = POS.find(p => !pos[p] && p !== "c0"); if (free) pos[free] = x; }
-  return { squad: Object.values(pos), pos, bb: !!e.bb, tc: !!e.tc, asked: !!e.asked };
+  return { squad: Object.values(pos), pos, cap: lu.c && st.includes(lu.c) ? lu.c : null, bb: !!e.bb, tc: !!e.tc, asked: !!e.asked, v: 3 };
 }
 function mtData() {
   const d = store.get(mtKey()) || {}; d.rounds = d.rounds || {}; d.meta = d.meta || {};
@@ -1267,10 +1274,11 @@ function mtData() {
 function mtEntry(d, rk) {
   if (d.rounds[rk]) return { e: d.rounds[rk], from: null };
   const rs = mtRounds(), i = rs.indexOf(rk);
-  for (let j = i - 1; j >= 0; j--) if (d.rounds[rs[j]]) { const p = d.rounds[rs[j]]; return { e: { squad: [...p.squad], pos: { ...p.pos }, bb: false, tc: false, asked: false }, from: rs[j] }; }
+  for (let j = i - 1; j >= 0; j--) if (d.rounds[rs[j]]) { const p = d.rounds[rs[j]]; return { e: { squad: [...p.squad], pos: { ...p.pos }, cap: p.cap || null, bb: false, tc: false, asked: false, v: 3 }, from: rs[j] }; }
   return null;
 }
-function mtMult(slot, e) { const k = slot[0]; return k === "c" ? (e.tc ? 3 : 2) : k === "s" || k === "x" ? 1 : k === "b" ? (e.bb ? 1 : 0.5) : 0; }
+function mtMult(slot, e, code) { const k = slot[0]; return k === "s" ? (code && code === e.cap ? (e.tc ? 3 : 2) : 1) : k === "x" ? 1 : k === "b" ? (e.bb ? 1 : 0.5) : 0; }
+const capOk = (e) => { if (e.cap && !STARTERS.some(s2 => e.pos[s2] === e.cap)) e.cap = null; };   // captain must be a starter
 function placeSquad(e) {                      // drop removed players, put new ones into the first free boxes
   for (const p of POS) if (e.pos[p] && !e.squad.includes(e.pos[p])) delete e.pos[p];
   const placed = new Set(Object.values(e.pos));
@@ -1383,15 +1391,16 @@ function paintBoard(loading) {
   const e = me.e, roundGames = S.games.filter(g => roundKey(g) === rk), finished = roundGames.length && roundGames.every(g => g.played);
   let total = 0, live = 0, toPlay = 0, done = 0, resPts = 0;
   for (const slot of POS) { const c = e.pos[slot], x = c && MT.lines[c]; if (!x) continue;
-    if (x.fp != null) total += x.fp * mtMult(slot, e);
+    if (x.fp != null) total += x.fp * mtMult(slot, e, c);
     if (slot[0] === "r" && x.fp != null) resPts += x.fp;
     if (x.kind === "live" || x.kind === "notyet") live++; else if (x.kind === "pending") toPlay++; else if (x.kind === "final" || x.kind === "dnp") done++; }
   const card = (slot, extra = "") => {
-    const code = e.pos[slot], m = mtMult(slot, e), sel = MT.sel === slot ? "selected" : "";
+    const code = e.pos[slot], m = mtMult(slot, e, code), sel = MT.sel === slot ? "selected" : "", isCap = code && code === e.cap;
+    if (isCap) extra += " cap";
     if (!code) return `<div class="mt-card empty ${extra} ${sel}" data-slot="${slot}"><span class="mt-plus">+</span><small>${MT.sel ? "Move here" : "Add"}</small></div>`;
     const x = MT.lines[code], has = x && x.fp != null && ["final", "live", "dnp", "notyet"].includes(x.kind), val = has ? x.fp * m : null;
     const dot = x?.kind === "live" ? `<i class="mt-dot" title="Playing now"></i>` : "";
-    const arm = slot === "c0" ? `<span class="mt-arm">${e.tc ? "C×3" : "C"}</span>` : "";
+    const arm = isCap ? `<span class="mt-arm">${e.tc ? "C×3" : "C"}</span>` : "";
     return `<div class="mt-card ${extra} ${sel} ${x?.kind === "live" ? "is-live" : ""}" data-slot="${slot}" data-code="${esc(code)}" title="${esc(mtName(code, d))}">${arm}
       <div class="mt-cn">${dot}<span>${esc(mtShort(code, d))}</span></div>
       <div class="mt-ct">${esc(x?.team || mtTeamOf(code, d))}</div>
@@ -1403,15 +1412,15 @@ function paintBoard(loading) {
   const selName = MT.sel && e.pos[MT.sel] ? mtName(e.pos[MT.sel], d) : "";
   $("#main").innerHTML = `<div class="mt-head card">${mtRoundNav(rk)}
       <div class="mt-score"><b>${loading ? "…" : f1(total)}</b><span>Fantasy Points</span></div>
-      <div class="mt-meta">${live ? `<span class="mt-livetag"><i class="mt-dot"></i>${live} playing</span>` : ""}<span>${done} done · ${toPlay} to play</span>${!e.pos.c0 ? '<span class="negv">No captain</span>' : ""}</div>
+      <div class="mt-meta">${live ? `<span class="mt-livetag"><i class="mt-dot"></i>${live} playing</span>` : ""}<span>${done} done · ${toPlay} to play</span>${!e.cap ? '<span class="negv">No captain · tap a starter</span>' : ""}</div>
       <div class="mt-wcs ${ask ? "asking" : ""}">${ask ? `<span class="mt-q">Wildcards this round?</span>` : ""}${chip("bb", "Bench Boost")}${chip("tc", "Triple Captain")}${ask ? `<button class="mt-wc done" data-mt-asked>Done</button>` : ""}</div>
     </div>
     ${MT.sel ? `<div class="mt-selbar"><span>Tap where <b>${esc(selName)}</b> should go</span><button class="mt-link" data-mt-cancel>Cancel</button></div>` : ""}
     ${me.from ? `<p class="mt-from">Same lineup as ${esc(roundLabel(me.from))}. Changes here apply to ${esc(roundLabel(rk))} only.</p>` : ""}
     <div id="mt-board">
       <div class="mt-court">${COURT_SVG}
-        <div class="mt-crow two">${card("c0", "cap")}${card("s0")}</div>
-        <div class="mt-crow">${card("s1")}${card("s2")}${card("s3")}</div>
+        <div class="mt-crow two">${card("s0")}${card("s1")}</div>
+        <div class="mt-crow">${card("s2")}${card("s3")}${card("s4")}</div>
       </div>
       <div class="mt-benchzone">
         <div class="mt-blab"><span>6th man <em>×1</em></span><span>Bench <em>${e.bb ? "×1 · Bench Boost" : "×0.5"}</em></span></div>
@@ -1425,7 +1434,7 @@ function paintBoard(loading) {
 }
 function mtSwap(a, b) {
   if (a === b) return;
-  mtWithEntry(e => { const x = e.pos[a], y = e.pos[b]; if (y) e.pos[a] = y; else delete e.pos[a]; if (x) e.pos[b] = x; else delete e.pos[b]; });
+  mtWithEntry(e => { const x = e.pos[a], y = e.pos[b]; if (y) e.pos[a] = y; else delete e.pos[a]; if (x) e.pos[b] = x; else delete e.pos[b]; capOk(e); });
   paintBoard();
 }
 
@@ -1435,6 +1444,7 @@ function openMtMenu(slot) {
   closeMtMenu();
   document.body.insertAdjacentHTML("beforeend", `<div id="mt-menu" class="mt-menu-ov" data-mt-menuclose><div class="mt-menu card" role="dialog" aria-label="${esc(mtName(code, d))}">
     <div class="mt-menu-h"><b>${esc(mtName(code, d))}</b><span>${esc(mtTeamOf(code, d))}</span></div>
+    ${slot[0] === "s" ? (me.e.cap === code ? `<button data-mt-act="uncaptain" data-slot="${slot}">Remove captain</button>` : `<button data-mt-act="captain" data-slot="${slot}" class="cap">Make captain</button>`) : ""}
     <button data-mt-act="swap" data-slot="${slot}">Swap or move</button>
     <button data-mt-act="replace" data-slot="${slot}">Replace with another player</button>
     <button data-mt-act="stats" data-slot="${slot}">Player stats</button>
@@ -1469,6 +1479,7 @@ function mtReplace(code) {
   const e = me.e;
   if (!old && e.squad.length >= SQUAD_MAX) { closeSheet(); return; }
   e.squad = e.squad.filter(c => c !== old).concat(code); e.pos[slot] = code;
+  if (old && e.cap === old) e.cap = code;                    // the new player takes over the armband
   d.meta[code] = { n: p.name, t: p.team }; d.rounds[MT.round] = e; mtSave(d);
   closeSheet(); renderMyTeam({ fresh: true });
 }
@@ -1568,8 +1579,9 @@ function mtToggle(code) {
 }
 function mtSaveSquad() {
   const d = mtData(), me = mtEntry(d, MT.round);
-  const e = me ? me.e : { squad: [], pos: {}, bb: false, tc: false, asked: false };
-  e.squad = [...MT.draft]; placeSquad(e);
+  const e = me ? me.e : { squad: [], pos: {}, cap: null, bb: false, tc: false, asked: false, v: 3 };
+  e.squad = [...MT.draft]; placeSquad(e); e.v = 3;
+  capOk(e); if (!e.cap && e.pos.s0) e.cap = e.pos.s0;
   for (const c of e.squad) { const p = MT.pl?.find(x => x.code === c); if (p) d.meta[c] = { n: p.name, t: p.team }; }
   d.rounds[MT.round] = e; mtSave(d); closeSheet(); renderMyTeam({ fresh: true });
 }
@@ -1605,7 +1617,9 @@ document.addEventListener("click", (ev) => {
     if (act === "swap") { MT.sel = slot; return paintBoard(); }
     if (act === "replace") return openReplace(slot);
     if (act === "stats" && code) return openPlayer(code);
-    if (act === "remove") { mtWithEntry(e => { e.squad = e.squad.filter(c => c !== e.pos[slot]); delete e.pos[slot]; }); return renderMyTeam({ fresh: true }); }
+    if (act === "remove") { mtWithEntry(e => { e.squad = e.squad.filter(c => c !== e.pos[slot]); delete e.pos[slot]; capOk(e); }); return renderMyTeam({ fresh: true }); }
+    if (act === "captain") { mtWithEntry(e => { e.cap = code; }); return paintBoard(); }
+    if (act === "uncaptain") { mtWithEntry(e => { e.cap = null; }); return paintBoard(); }
     return;
   }
   if (t.hasAttribute("data-mt-menuclose")) { if (ev.target === t || t.tagName === "BUTTON") closeMtMenu(); return; }
