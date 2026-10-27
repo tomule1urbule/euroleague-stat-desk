@@ -357,6 +357,8 @@ body.mt-dragging,body.mt-dragging *{cursor:grabbing!important}
 .mt-cp{font-weight:800;font-size:20px;letter-spacing:-.01em;line-height:1.15;margin-top:2px}
 .mt-cp.na{color:var(--line-2)}
 .mt-card.cap .mt-cp{color:var(--gold)}
+.mt-cf{font-size:10px;font-weight:700;color:var(--muted);white-space:nowrap;line-height:1.2}
+.mt-cp.ghost{color:var(--muted)}
 .mt-cs{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .mt-cs .pos,.mt-cs .negv{font-weight:800}
 .mt-benchzone{padding:12px 10px;border-radius:16px;background:var(--surface-2);border:1px solid var(--line);margin-bottom:12px}
@@ -1406,7 +1408,9 @@ function paintBoard(loading) {
     return `<div class="mt-card ${extra} ${sel} ${x?.kind === "live" ? "is-live" : ""}" data-slot="${slot}" data-code="${esc(code)}" title="${esc(mtName(code, d))}">${arm}
       <div class="mt-cn">${dot}<span>${esc(mtShort(code, d))}</span></div>
       <div class="mt-ct">${esc(x?.team || mtTeamOf(code, d))}</div>
-      <div class="mt-cp ${val == null ? "na" : val < 0 ? "negv" : ""}">${val == null ? "–" : f1(val)}</div>
+      ${slot[0] === "r"
+        ? `<div class="mt-cp ghost ${has && x.fp < 0 ? "negv" : ""}">${has ? f1(x.fp) : "–"}</div><div class="mt-cf">if starting</div>`
+        : `<div class="mt-cp ${val == null ? "na" : val < 0 ? "negv" : ""}">${val == null ? "–" : f1(val)}</div>${slot[0] === "b" && has && m !== 1 ? `<div class="mt-cf">${f1(x.fp)} if starting</div>` : ""}`}
       <div class="mt-cs">${x ? mtTiny(x) : loading ? "…" : ""}</div></div>`;
   };
   const chip = (k, label) => `<button class="mt-wc ${e[k] ? "on" : ""}" data-mt-wc="${k}" aria-pressed="${!!e[k]}">${e[k] ? "✓ " : ""}${label}</button>`;
@@ -1447,6 +1451,7 @@ function openMtMenu(slot) {
   document.body.insertAdjacentHTML("beforeend", `<div id="mt-menu" class="mt-menu-ov" data-mt-menuclose><div class="mt-menu card" role="dialog" aria-label="${esc(mtName(code, d))}">
     <div class="mt-menu-h"><b>${esc(mtName(code, d))}</b><span>${esc(mtTeamOf(code, d))}</span></div>
     ${slot[0] === "s" ? (me.e.cap === code ? `<button data-mt-act="uncaptain" data-slot="${slot}">Remove captain</button>` : `<button data-mt-act="captain" data-slot="${slot}" class="cap">Make captain</button>`) : ""}
+    ${MT.lines[code]?.g ? `<button data-mt-act="game" data-slot="${slot}">${MT.lines[code].kind === "pending" ? "Game preview" : "Game box score"}</button>` : ""}
     <button data-mt-act="swap" data-slot="${slot}">Swap or move</button>
     <button data-mt-act="replace" data-slot="${slot}">Replace with another player</button>
     <button data-mt-act="stats" data-slot="${slot}">Player stats</button>
@@ -1620,6 +1625,7 @@ document.addEventListener("click", (ev) => {
     if (act === "replace") return openReplace(slot);
     if (act === "stats" && code) return openPlayer(code);
     if (act === "remove") { mtWithEntry(e => { e.squad = e.squad.filter(c => c !== e.pos[slot]); delete e.pos[slot]; capOk(e); }); return renderMyTeam({ fresh: true }); }
+    if (act === "game") { const g = code && MT.lines[code]?.g; if (g) openGame(g.code); return; }
     if (act === "captain") { mtWithEntry(e => { e.cap = code; }); return paintBoard(); }
     if (act === "uncaptain") { mtWithEntry(e => { e.cap = null; }); return paintBoard(); }
     return;
