@@ -20,7 +20,7 @@
   --ink:#0d1b2a; --muted:#64748b; --sea:#1d5fd1; --sea-soft:#e7effc;
   --gold:#a8700f; --gold-bright:#e3a72f; --gold-soft:#fdf2db;
   --live:#e02d3c; --win:#15924a; --loss:#d63a3a;
-  --shadow:0 1px 2px rgba(13,27,42,.05),0 8px 24px -8px rgba(13,27,42,.12); --hdr:#0d1b2a; --on-sea:#ffffff; --mine:#fff4d6;
+  --shadow:0 1px 2px rgba(13,27,42,.05),0 8px 24px -8px rgba(13,27,42,.12); --hdr:#0d1b2a; --on-sea:#ffffff; --on-win:#ffffff; --mine:#fff4d6;
   --radius:16px;
   --display:"Unbounded","Arial Black",system-ui,sans-serif;
   --ui:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -31,13 +31,13 @@
   --ink:#e9eef6; --muted:#8fa1b8; --sea:#6ea6ff; --sea-soft:rgba(110,166,255,.12);
   --gold:#f3c04f; --gold-bright:#f3c04f; --gold-soft:rgba(243,192,79,.13);
   --live:#ff4d5e; --win:#3fd58a; --loss:#ff6b6b;
-  --shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -12px rgba(0,0,0,.6); --hdr:#0d1726; --on-sea:#06142b; --mine:rgba(243,192,79,.11); color-scheme:dark}}
+  --shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -12px rgba(0,0,0,.6); --hdr:#0d1726; --on-sea:#06142b; --on-win:#062614; --mine:rgba(243,192,79,.11); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#09101b; --surface:#111a28; --surface-2:#172236; --line:#1f2c42; --line-2:#2a3a55;
   --ink:#e9eef6; --muted:#8fa1b8; --sea:#6ea6ff; --sea-soft:rgba(110,166,255,.12);
   --gold:#f3c04f; --gold-bright:#f3c04f; --gold-soft:rgba(243,192,79,.13);
   --live:#ff4d5e; --win:#3fd58a; --loss:#ff6b6b;
-  --shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -12px rgba(0,0,0,.6); --hdr:#0d1726; --on-sea:#06142b; --mine:rgba(243,192,79,.11); color-scheme:dark}
+  --shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -12px rgba(0,0,0,.6); --hdr:#0d1726; --on-sea:#06142b; --on-win:#062614; --mine:rgba(243,192,79,.11); color-scheme:dark}
 
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -359,6 +359,13 @@ body.mt-dragging,body.mt-dragging *{cursor:grabbing!important}
 .mt-card.cap .mt-cp{color:var(--gold)}
 .mt-cf{font-size:10px;font-weight:700;color:var(--muted);white-space:nowrap;line-height:1.2}
 .mt-cp.ghost{color:var(--muted)}
+.mt-onc{position:absolute;top:-8px;right:-6px;padding:2px 6px;border-radius:8px;background:var(--win);color:var(--on-win);font-size:10px;font-weight:800;letter-spacing:.04em;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.mt-card.oncourt{border-color:var(--win);box-shadow:0 0 0 2px var(--win),0 4px 14px rgba(0,0,0,.18)}
+.mt-card.cap.oncourt{box-shadow:0 0 0 2px var(--gold-bright),0 0 0 4px var(--win),0 4px 14px rgba(0,0,0,.2)}
+.mt-onctag{color:var(--win);font-weight:800}
+.mt-dd{margin-top:4px;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.mt-dd.near{background:var(--sea-soft);color:var(--sea)}
+.mt-dd.got{background:var(--gold-bright);color:#1a1204}
 .mt-cs{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .mt-cs .pos,.mt-cs .negv{font-weight:800}
 .mt-benchzone{padding:12px 10px;border-radius:16px;background:var(--surface-2);border:1px solid var(--line);margin-bottom:12px}
@@ -1372,6 +1379,16 @@ function mtShort(code, d) {
   if (d.meta[code]?.s) return d.meta[code].s;
   const n2 = mtName(code, d); const parts = String(n2).split(" "); return parts.length > 1 ? parts.slice(1).join(" ") : n2;
 }
+// Double-double watch: "3 reb to DD" while close in a live game; gold once reached (kept after the game).
+function ddInfo(l, live) {
+  const cats = [["pts", l.pts], ["reb", l.tr], ["ast", l.ast], ["stl", l.stl], ["blk", l.blk]].sort((a, b) => b[1] - a[1]);
+  const n10 = cats.filter(c => c[1] >= 10).length;
+  if (n10 >= 4) return { cls: "got", t: "Quadruple-double" };
+  if (n10 === 3) return live && cats[3][1] >= 7 ? { cls: "got", t: `${10 - cats[3][1]} ${cats[3][0]} to QD`, full: "Triple-double reached" } : { cls: "got", t: "Triple-double" };
+  if (n10 === 2) return live && cats[2][1] >= 7 ? { cls: "got", t: `${10 - cats[2][1]} ${cats[2][0]} to TD`, full: "Double-double reached" } : { cls: "got", t: "Double-double" };
+  if (live && cats[0][1] >= 8 && cats[1][1] >= 7) return { cls: "near", t: cats.slice(0, 2).filter(c => c[1] < 10).map(c => `${10 - c[1]} ${c[0]}`).join(" + ") + " to DD" };
+  return null;
+}
 function mtTiny(x) {
   if (!x || x.kind === "none") return "No game";
   const g = x.g, home = g.home.code === x.team;
@@ -1393,10 +1410,11 @@ function paintBoard(loading) {
   if (S.tab !== "myteam") return;
   const rk = MT.round, d = mtData(), me = mtEntry(d, rk); if (!me) return;
   const e = me.e, roundGames = S.games.filter(g => roundKey(g) === rk), finished = roundGames.length && roundGames.every(g => g.played);
-  let total = 0, live = 0, toPlay = 0, done = 0, resPts = 0;
+  let total = 0, live = 0, toPlay = 0, done = 0, resPts = 0, onCourt = 0;
   for (const slot of POS) { const c = e.pos[slot], x = c && MT.lines[c]; if (!x) continue;
     if (x.fp != null) total += x.fp * mtMult(slot, e, c);
     if (slot[0] === "r" && x.fp != null) resPts += x.fp;
+    if (x.kind === "live" && x.l?.on) onCourt++;
     if (x.kind === "live" || x.kind === "notyet") live++; else if (x.kind === "pending") toPlay++; else if (x.kind === "final" || x.kind === "dnp") done++; }
   const card = (slot, extra = "") => {
     const code = e.pos[slot], m = mtMult(slot, e, code), sel = MT.sel === slot ? "selected" : "", isCap = code && code === e.cap;
@@ -1405,20 +1423,22 @@ function paintBoard(loading) {
     const x = MT.lines[code], has = x && x.fp != null && ["final", "live", "dnp", "notyet"].includes(x.kind), val = has ? x.fp * m : null;
     const dot = x?.kind === "live" ? `<i class="mt-dot" title="Playing now"></i>` : "";
     const arm = isCap ? `<span class="mt-arm">${e.tc ? "C×3" : "C"}</span>` : "";
-    return `<div class="mt-card ${extra} ${sel} ${x?.kind === "live" ? "is-live" : ""}" data-slot="${slot}" data-code="${esc(code)}" title="${esc(mtName(code, d))}">${arm}
+    const onc = x?.kind === "live" && x.l?.on;
+    const dd = x?.l && (x.kind === "live" || x.kind === "final") ? ddInfo(x.l, x.kind === "live") : null;
+    return `<div class="mt-card ${extra} ${sel} ${x?.kind === "live" ? "is-live" : ""} ${onc ? "oncourt" : ""}" data-slot="${slot}" data-code="${esc(code)}" title="${esc(mtName(code, d))}">${arm}${onc ? '<span class="mt-onc">ON</span>' : ""}
       <div class="mt-cn">${dot}<span>${esc(mtShort(code, d))}</span></div>
       <div class="mt-ct">${esc(x?.team || mtTeamOf(code, d))}</div>
       ${slot[0] === "r"
         ? `<div class="mt-cp ghost ${has && x.fp < 0 ? "negv" : ""}">${has ? f1(x.fp) : "–"}</div><div class="mt-cf">if starting</div>`
         : `<div class="mt-cp ${val == null ? "na" : val < 0 ? "negv" : ""}">${val == null ? "–" : f1(val)}</div>${slot[0] === "b" && has && m !== 1 ? `<div class="mt-cf">${f1(x.fp)} if starting</div>` : ""}`}
-      <div class="mt-cs">${x ? mtTiny(x) : loading ? "…" : ""}</div></div>`;
+      <div class="mt-cs">${x ? mtTiny(x) : loading ? "…" : ""}</div>${dd ? `<div class="mt-dd ${dd.cls}" title="${dd.full || (dd.cls === "near" ? "Close to a double-double" : dd.t)}">${dd.t}</div>` : ""}</div>`;
   };
   const chip = (k, label) => `<button class="mt-wc ${e[k] ? "on" : ""}" data-mt-wc="${k}" aria-pressed="${!!e[k]}">${e[k] ? "✓ " : ""}${label}</button>`;
   const ask = !e.asked && !finished;
   const selName = MT.sel && e.pos[MT.sel] ? mtName(e.pos[MT.sel], d) : "";
   $("#main").innerHTML = `<div class="mt-head card">${mtRoundNav(rk)}
       <div class="mt-score"><b>${loading ? "…" : f1(total)}</b><span>Fantasy Points</span></div>
-      <div class="mt-meta">${live ? `<span class="mt-livetag"><i class="mt-dot"></i>${live} playing</span>` : ""}<span>${done} done · ${toPlay} to play</span>${!e.cap ? '<span class="negv">No captain · tap a starter</span>' : ""}</div>
+      <div class="mt-meta">${live ? `<span class="mt-livetag"><i class="mt-dot"></i>${live} playing</span>` : ""}${onCourt ? `<span class="mt-onctag">${onCourt} on court</span>` : ""}<span>${done} done · ${toPlay} to play</span>${!e.cap ? '<span class="negv">No captain · tap a starter</span>' : ""}</div>
       <div class="mt-wcs ${ask ? "asking" : ""}">${ask ? `<span class="mt-q">Wildcards this round?</span>` : ""}${chip("bb", "Bench Boost")}${chip("tc", "Triple Captain")}${ask ? `<button class="mt-wc done" data-mt-asked>Done</button>` : ""}</div>
     </div>
     ${MT.sel ? `<div class="mt-selbar"><span>Tap where <b>${esc(selName)}</b> should go</span><button class="mt-link" data-mt-cancel>Cancel</button></div>` : ""}
