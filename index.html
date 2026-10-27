@@ -288,7 +288,6 @@ tr.mine:hover td{background:var(--mine)}
 .mt-row.empty{justify-content:center;color:var(--muted);font-size:13px;font-weight:600;min-height:48px}
 .mt-row.selected,.mt-row.drop-over{background:var(--sea-soft);box-shadow:inset 0 0 0 2px var(--sea)}
 .mt-row.dragging{opacity:.35}
-.mt-ghost{position:fixed;z-index:200;pointer-events:none;background:var(--surface);border:1px solid var(--sea);border-radius:12px;box-shadow:0 14px 30px rgba(0,0,0,.3);transform:scale(1.02)}
 body.mt-dragging,body.mt-dragging *{cursor:grabbing!important}
 .mt-who{min-width:0;display:flex;flex-direction:column;gap:2px}
 .mt-who b{display:flex;align-items:center;gap:7px;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -333,6 +332,56 @@ body.mt-dragging,body.mt-dragging *{cursor:grabbing!important}
 .mt-addb{font-size:12px;font-weight:800;color:var(--sea);white-space:nowrap}
 .mt-res.taken .mt-addb{color:var(--win)}
 .mt-savebar{position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0 calc(6px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line)}
+.mt-court{position:relative;border-radius:18px;padding:22px 10px 26px;margin-bottom:12px;background:radial-gradient(120% 90% at 50% 0%,#2b4f80,#173257 70%);color:rgba(255,255,255,.28);overflow:hidden;display:flex;flex-direction:column;gap:14px;box-shadow:var(--shadow)}
+.mt-lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.mt-crow{position:relative;display:flex;justify-content:center;gap:8px}
+.mt-crow .mt-card{width:calc((100% - 16px)/3);max-width:150px}
+.mt-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;padding:10px 6px 8px;border-radius:12px;background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.18);cursor:pointer;text-align:center;min-width:0;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:transform .12s,box-shadow .12s}
+.mt-card:hover{transform:translateY(-1px)}
+.mt-card.cap{border-color:var(--gold-bright);box-shadow:0 0 0 2px var(--gold-bright),0 4px 14px rgba(0,0,0,.2)}
+.mt-card.is-live{border-color:var(--live)}
+.mt-card.selected,.mt-card.drop-over{box-shadow:0 0 0 3px var(--sea),0 4px 14px rgba(0,0,0,.2)}
+.mt-card.dragging{opacity:.3}
+.mt-card.empty{background:transparent;border:1.5px dashed rgba(255,255,255,.45);color:rgba(255,255,255,.75);box-shadow:none;justify-content:center;min-height:92px}
+.mt-benchzone .mt-card.empty,.mt-reserve .mt-card.empty{border-color:var(--line-2);color:var(--muted);min-height:84px}
+.mt-plus{font-size:22px;font-weight:700;line-height:1}
+.mt-card.empty small{font-size:11px;font-weight:700}
+.mt-arm{position:absolute;top:-8px;left:-6px;padding:2px 7px;border-radius:8px;background:var(--gold-bright);color:#1a1204;font-size:11px;font-weight:800;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.mt-cn{display:flex;align-items:center;justify-content:center;gap:5px;max-width:100%;font-weight:800;font-size:14px;line-height:1.2}
+.mt-cn span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.mt-ct{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.mt-cp{font-weight:800;font-size:20px;letter-spacing:-.01em;line-height:1.15;margin-top:2px}
+.mt-cp.na{color:var(--line-2)}
+.mt-card.cap .mt-cp{color:var(--gold)}
+.mt-cs{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.mt-cs .pos,.mt-cs .negv{font-weight:800}
+.mt-benchzone{padding:12px 10px;border-radius:16px;background:var(--surface-2);border:1px solid var(--line);margin-bottom:12px}
+.mt-blab{display:flex;gap:8px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 2px 8px}
+.mt-blab span:first-child{width:calc((100% - 8px)/5)}
+.mt-blab em,.mt-reserve em{font-style:normal;letter-spacing:0;text-transform:none;font-weight:700}
+.mt-brow{display:grid;grid-template-columns:1fr 4fr;gap:8px}
+.mt-bgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.mt-benchzone .mt-card,.mt-reserve .mt-card{padding:8px 4px 7px;box-shadow:none}
+.mt-benchzone .mt-cn,.mt-reserve .mt-cn{font-size:12.5px}
+.mt-benchzone .mt-cp,.mt-reserve .mt-cp{font-size:16px}
+.mt-card.sixth{border-color:var(--sea)}
+.mt-reserve{border-radius:16px;border:1px solid var(--line);background:var(--surface);margin-bottom:12px}
+.mt-reserve summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;list-style:none;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mt-reserve summary::-webkit-details-marker{display:none}
+.mt-reserve summary::before{content:"▸";margin-right:6px}
+.mt-reserve[open] summary::before{content:"▾"}
+.mt-reserve summary span:first-child{flex:1}
+.mt-reserve summary .sub{text-transform:none;letter-spacing:0;font-weight:600}
+.mt-rgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 10px 12px}
+.mt-ghost{position:fixed;z-index:200;pointer-events:none;transform:scale(1.06);box-shadow:0 16px 34px rgba(0,0,0,.35)!important;opacity:.97}
+@media (max-width:480px){
+  .mt-brow{grid-template-columns:1fr}
+  .mt-brow>.mt-card{width:calc((100% - 24px)/4);justify-self:start}
+  .mt-blab{display:none}
+  .mt-brow::before{content:"6th man ×1";font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 2px -2px}
+  .mt-bgrid::before{content:"Bench";grid-column:1/-1;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:2px 2px -2px}
+}
 footer{color:var(--muted);font-size:12px;padding-block:24px 32px;border-top:1px solid var(--line)}
 
 /* phone: tabs become a bottom bar */
@@ -1276,24 +1325,51 @@ function mtStatusShort(x) {
   const my = home ? a : b, th = home ? b : a, clock = L ? liveLabel(L).replace(/^Live( · )?/, "") : "Live";
   return `<span class="mt-clock">${clock}</span> · ${my}–${th} ${vs}${x.kind === "notyet" ? " · on bench" : x.l?.on ? " · on court" : ""}`;
 }
+// Short (last) name for cards: "DE COLO, NANDO" -> "De Colo"
+function mtShort(code, d) {
+  const p = (S.players.Accumulated || S.players.PerGame)?.find(x => x.code === code);
+  if (p?.raw) return nice(String(p.raw).split(",")[0]);
+  if (d.meta[code]?.s) return d.meta[code].s;
+  const n2 = mtName(code, d); const parts = String(n2).split(" "); return parts.length > 1 ? parts.slice(1).join(" ") : n2;
+}
+function mtTiny(x) {
+  if (!x || x.kind === "none") return "No game";
+  const g = x.g, home = g.home.code === x.team;
+  if (x.kind === "pending") return shortWhen(new Date(g.date));
+  if (x.kind === "error") return "–";
+  if (x.kind === "final" || x.kind === "dnp") {
+    if (x.kind === "dnp") return "DNP";
+    const my = home ? g.home.score : g.away.score, th = home ? g.away.score : g.home.score;
+    return `<span class="${my > th ? "pos" : "negv"}">${my > th ? "W" : "L"}</span> ${my}–${th}`;
+  }
+  const L = S.live.get(g.code), clock = L ? liveLabel(L).replace(/^Live( · )?/, "") : "Live";
+  return `<span class="mt-clock">${clock}</span>${x.kind === "notyet" ? " · bench" : ""}`;
+}
+const COURT_SVG = `<svg class="mt-lines" viewBox="0 0 300 250" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2">
+  <rect x="6" y="6" width="288" height="238" rx="4"/><rect x="105" y="6" width="90" height="105"/><path d="M105 111 a45 45 0 0 0 90 0"/>
+  <path d="M24 6 V62 A126 126 0 0 0 276 62 V6"/><circle cx="150" cy="30" r="7"/><line x1="135" y1="20" x2="165" y2="20"/>
+  <path d="M110 244 a40 40 0 0 1 80 0"/></g></svg>`;
 function paintBoard(loading) {
   if (S.tab !== "myteam") return;
   const rk = MT.round, d = mtData(), me = mtEntry(d, rk); if (!me) return;
   const e = me.e, roundGames = S.games.filter(g => roundKey(g) === rk), finished = roundGames.length && roundGames.every(g => g.played);
-  let total = 0, live = 0, toPlay = 0, done = 0;
+  let total = 0, live = 0, toPlay = 0, done = 0, resPts = 0;
   for (const slot of POS) { const c = e.pos[slot], x = c && MT.lines[c]; if (!x) continue;
     if (x.fp != null) total += x.fp * mtMult(slot, e);
+    if (slot[0] === "r" && x.fp != null) resPts += x.fp;
     if (x.kind === "live" || x.kind === "notyet") live++; else if (x.kind === "pending") toPlay++; else if (x.kind === "final" || x.kind === "dnp") done++; }
-  const row = (slot) => {
+  const card = (slot, extra = "") => {
     const code = e.pos[slot], m = mtMult(slot, e), sel = MT.sel === slot ? "selected" : "";
-    if (!code) return `<div class="mt-row empty ${sel}" data-slot="${slot}"><span>${MT.sel ? "Move here" : "+ Add player"}</span></div>`;
+    if (!code) return `<div class="mt-card empty ${extra} ${sel}" data-slot="${slot}"><span class="mt-plus">+</span><small>${MT.sel ? "Move here" : "Add"}</small></div>`;
     const x = MT.lines[code], has = x && x.fp != null && ["final", "live", "dnp", "notyet"].includes(x.kind), val = has ? x.fp * m : null;
     const dot = x?.kind === "live" ? `<i class="mt-dot" title="Playing now"></i>` : "";
-    return `<div class="mt-row ${sel}" data-slot="${slot}" data-code="${esc(code)}">
-      <div class="mt-who"><b>${dot}${esc(mtName(code, d))}</b><span>${esc(x?.team || mtTeamOf(code, d))} · ${x ? mtStatusShort(x) : loading ? "…" : ""}</span></div>
-      <div class="mt-pts"><b class="${val == null ? "na" : val < 0 ? "negv" : ""}">${val == null ? "–" : f1(val)}</b>${has && m !== 1 ? `<small>${f1(x.fp)} × ${m}</small>` : ""}</div></div>`;
+    const arm = slot === "c0" ? `<span class="mt-arm">${e.tc ? "C×3" : "C"}</span>` : "";
+    return `<div class="mt-card ${extra} ${sel} ${x?.kind === "live" ? "is-live" : ""}" data-slot="${slot}" data-code="${esc(code)}" title="${esc(mtName(code, d))}">${arm}
+      <div class="mt-cn">${dot}<span>${esc(mtShort(code, d))}</span></div>
+      <div class="mt-ct">${esc(x?.team || mtTeamOf(code, d))}</div>
+      <div class="mt-cp ${val == null ? "na" : val < 0 ? "negv" : ""}">${val == null ? "–" : f1(val)}</div>
+      <div class="mt-cs">${x ? mtTiny(x) : loading ? "…" : ""}</div></div>`;
   };
-  const mult = (k) => k === "c" ? (e.tc ? "×3" : "×2") : k === "s" || k === "x" ? "×1" : k === "b" ? (e.bb ? "×1" : "×0.5") : "×0";
   const chip = (k, label) => `<button class="mt-wc ${e[k] ? "on" : ""}" data-mt-wc="${k}" aria-pressed="${!!e[k]}">${e[k] ? "✓ " : ""}${label}</button>`;
   const ask = !e.asked && !finished;
   const selName = MT.sel && e.pos[MT.sel] ? mtName(e.pos[MT.sel], d) : "";
@@ -1304,9 +1380,20 @@ function paintBoard(loading) {
     </div>
     ${MT.sel ? `<div class="mt-selbar"><span>Tap where <b>${esc(selName)}</b> should go</span><button class="mt-link" data-mt-cancel>Cancel</button></div>` : ""}
     ${me.from ? `<p class="mt-from">Same lineup as ${esc(roundLabel(me.from))}. Changes here apply to ${esc(roundLabel(rk))} only.</p>` : ""}
-    <div id="mt-board">${BOXES.map(([k, title, slots]) => `<section class="mt-sec mt-sec-${k}"><div class="mt-lab"><span>${title}</span><em>${mult(k)}</em></div><div class="mt-list">${slots.map(row).join("")}</div></section>`).join("")}</div>
+    <div id="mt-board">
+      <div class="mt-court">${COURT_SVG}
+        <div class="mt-crow two">${card("c0", "cap")}${card("s0")}</div>
+        <div class="mt-crow">${card("s1")}${card("s2")}${card("s3")}</div>
+      </div>
+      <div class="mt-benchzone">
+        <div class="mt-blab"><span>6th man <em>×1</em></span><span>Bench <em>${e.bb ? "×1 · Bench Boost" : "×0.5"}</em></span></div>
+        <div class="mt-brow">${card("x0", "sixth")}<div class="mt-bgrid">${card("b0")}${card("b1")}${card("b2")}${card("b3")}</div></div>
+      </div>
+      <details class="mt-reserve" id="mt-reserve" ${MT.resOpen ? "open" : ""}><summary><span>Reserve (3) <em>×0</em></span><span class="sub">${f1(resPts)} FP not counted</span></summary>
+        <div class="mt-rgrid">${card("r0")}${card("r1")}${card("r2")}</div></details>
+    </div>
     <div class="mt-foot">${live ? `<button class="mt-link" data-mt-refresh>↻ Refresh</button> · ` : ""}<button class="mt-link" data-mt-edit>Edit players</button> · <button class="mt-link" data-mt-backup>Back up</button></div>
-    <p class="mt-help">Hold and drag a player to move him, or tap him for options. Saved on this device.</p>`;
+    <p class="mt-help">Hold and drag a card to move a player, or tap it for options. Saved on this device.</p>`;
 }
 function mtSwap(a, b) {
   if (a === b) return;
@@ -1368,12 +1455,13 @@ function mtStartDrag() {
   pd.row.classList.add("dragging");
   MT.drag = { from: pd.slot, ghost, dx: pd.x - r.left, dy: pd.y - r.top, over: null };
   MT.sel = null; document.body.classList.add("mt-dragging");
+  const rv = $("#mt-reserve"); if (rv && !rv.open) { rv.open = true; MT.resOpen = true; }
   try { navigator.vibrate?.(12); } catch (e) {}
 }
 function mtMoveDrag(x, y) {
   const g = MT.drag; if (!g) return;
   g.ghost.style.left = (x - g.dx) + "px"; g.ghost.style.top = (y - g.dy) + "px";
-  const over = document.elementFromPoint(x, y)?.closest("#mt-board .mt-row");
+  const over = document.elementFromPoint(x, y)?.closest("#mt-board .mt-card");
   if (g.over && g.over !== over) g.over.classList.remove("drop-over");
   if (over && over.dataset.slot !== g.from) over.classList.add("drop-over");
   g.over = over;
@@ -1388,7 +1476,7 @@ function mtEndDrag(drop) {
   if (drop && g.over && g.over.dataset.slot) mtSwap(g.from, g.over.dataset.slot); else paintBoard();
 }
 document.addEventListener("pointerdown", (ev) => {
-  const row = ev.target.closest("#mt-board .mt-row[data-code]"); if (!row || ev.button > 0) return;
+  const row = ev.target.closest("#mt-board .mt-card[data-code]"); if (!row || ev.button > 0) return;
   MT.pd = { row, slot: row.dataset.slot, x: ev.clientX, y: ev.clientY, mouse: ev.pointerType === "mouse" };
   if (!MT.pd.mouse) MT.pd.timer = setTimeout(mtStartDrag, 280);
 });
@@ -1402,9 +1490,10 @@ document.addEventListener("pointermove", (ev) => {
 document.addEventListener("pointerup", () => { if (MT.drag) mtEndDrag(true); else if (MT.pd) { clearTimeout(MT.pd.timer); MT.pd = null; } });
 document.addEventListener("pointercancel", () => { if (MT.drag) mtEndDrag(false); else if (MT.pd) { clearTimeout(MT.pd.timer); MT.pd = null; } });
 document.addEventListener("touchmove", (ev) => { if (MT.drag) ev.preventDefault(); }, { passive: false });
-document.addEventListener("contextmenu", (ev) => { if (ev.target.closest("#mt-board .mt-row")) ev.preventDefault(); });
+document.addEventListener("toggle", (ev) => { if (ev.target.id === "mt-reserve") MT.resOpen = ev.target.open; }, true);
+document.addEventListener("contextmenu", (ev) => { if (ev.target.closest("#mt-board .mt-card")) ev.preventDefault(); });
 document.addEventListener("click", (ev) => {
-  const row = ev.target.closest("#mt-board .mt-row"); if (!row || MT.justDragged) return;
+  const row = ev.target.closest("#mt-board .mt-card"); if (!row || MT.justDragged) return;
   const slot = row.dataset.slot;
   if (MT.sel) { const from = MT.sel; MT.sel = null; if (from === slot) return paintBoard(); return mtSwap(from, slot); }
   if (row.dataset.code) return openMtMenu(slot);
