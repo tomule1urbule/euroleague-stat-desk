@@ -240,64 +240,85 @@ tr.oncourt td:first-child{box-shadow:inset 3px 0 0 var(--live)}
 .teamh .sub{font-size:12px}
 .mvp-n{display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mvp .sub{font-size:13px}
-.mt-title{font:700 20px/1.2 var(--display);margin:0 0 10px}
-.mt-total{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 18px;margin-bottom:14px;background:linear-gradient(120deg,var(--gold-soft),var(--surface) 70%)}
-.mt-total .lab{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
-.mt-total .big{font-weight:800;font-size:40px;letter-spacing:-.02em;line-height:1.1;color:var(--gold)}
-.mt-tbtns{display:flex;gap:8px;flex-wrap:wrap}
-.mt-wcs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.mt-wcbar{margin-bottom:12px}
-.mt-wc{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface);min-width:0}
-.mt-wc b{font-size:14px}
-.mt-wc span{font-size:12px;color:var(--muted)}
-.mt-wc i{font-style:normal;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--sea);margin-top:4px}
-.mt-wc.on{background:var(--gold-soft);border-color:var(--gold-bright)}
-.mt-wc.on i{color:var(--gold)}
-.mt-ask{margin-bottom:12px;border-color:var(--gold-bright)}
-.mt-hint{font-size:13px;color:var(--muted);margin:0 0 12px;padding:8px 12px;border-radius:10px;background:var(--surface-2)}
-.mt-sec{margin-bottom:14px}
-.mt-sech{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 0 8px}
-.mt-sech h3{margin:0;font-size:15px;font-weight:800}
-.mt-list{overflow:hidden}
-.mt-box-c{border-color:var(--gold-bright);background:linear-gradient(120deg,var(--gold-soft),var(--surface) 60%)}
-.mt-row{display:grid;grid-template-columns:22px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 14px 10px 8px;border-bottom:1px solid var(--line);cursor:grab;
-  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:background .12s,box-shadow .12s}
-.mt-row:last-child{border-bottom:0}
+.mt-head{padding:14px 16px 12px;margin-bottom:14px;display:flex;flex-direction:column;gap:10px}
+.mt-rnav{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mt-rnav div{text-align:center;line-height:1.2}
+.mt-rnav small{display:block;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.mt-rnav b{font:700 17px var(--display)}
+.mt-nb{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);font-size:18px;font-weight:700;color:var(--ink)}
+.mt-nb:disabled{opacity:.35}
+.mt-score{display:flex;align-items:baseline;justify-content:center;gap:8px}
+.mt-score b{font-weight:800;font-size:44px;letter-spacing:-.03em;line-height:1;color:var(--gold)}
+.mt-score span{font-size:12px;font-weight:700;color:var(--muted)}
+.mt-meta{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--muted);font-weight:600}
+.mt-livetag{display:inline-flex;align-items:center;gap:5px;color:var(--live);font-weight:800}
+.mt-wcs{display:flex;justify-content:center;flex-wrap:wrap;align-items:center;gap:6px;padding-top:10px;border-top:1px solid var(--line)}
+.mt-wcs.asking{background:var(--gold-soft);border-top:0;border-radius:10px;padding:8px}
+.mt-q{width:100%;text-align:center;font-size:12px;font-weight:800;color:var(--gold)}
+.mt-wc{border:1px solid var(--line-2);background:var(--surface);color:var(--muted);border-radius:99px;padding:5px 12px;font-size:12px;font-weight:700}
+.mt-wc.on{background:var(--gold-bright);border-color:var(--gold-bright);color:#1a1204}
+.mt-wc.done{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.mt-selbar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 64px);z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;margin-bottom:12px;border-radius:12px;background:var(--sea);color:var(--on-sea);font-size:13px}
+.mt-selbar .mt-link{color:inherit;text-decoration:underline}
+.mt-from{font-size:12px;color:var(--muted);margin:0 0 10px;text-align:center}
+.mt-sec{margin-bottom:16px}
+.mt-lab{display:flex;align-items:center;justify-content:space-between;padding:0 4px 6px;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.mt-lab em{font-style:normal;letter-spacing:0;color:var(--muted)}
+.mt-sec-c .mt-lab span,.mt-sec-c .mt-lab em{color:var(--gold)}
+.mt-list{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.mt-sec-c .mt-list{border-color:var(--gold-bright)}
+.mt-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;border-top:1px solid var(--line);cursor:pointer;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:background .12s}
+.mt-row:first-child{border-top:0}
 .mt-row:hover{background:var(--surface-2)}
-.mt-row.is-live{box-shadow:inset 3px 0 0 var(--live)}
-.mt-row.empty-slot{cursor:pointer;min-height:52px}
-.mt-row.empty-slot .sub{font-style:italic}
-.mt-row.selected{background:var(--sea-soft);box-shadow:inset 0 0 0 2px var(--sea)}
-.mt-row.drop-over{background:var(--sea-soft);box-shadow:inset 0 0 0 2px var(--sea)}
+.mt-row.empty{justify-content:center;color:var(--muted);font-size:13px;font-weight:600;min-height:48px}
+.mt-row.selected,.mt-row.drop-over{background:var(--sea-soft);box-shadow:inset 0 0 0 2px var(--sea)}
 .mt-row.dragging{opacity:.35}
-.mt-grip{color:var(--muted);font-size:18px;line-height:1;text-align:center}
 .mt-ghost{position:fixed;z-index:200;pointer-events:none;background:var(--surface);border:1px solid var(--sea);border-radius:12px;box-shadow:0 14px 30px rgba(0,0,0,.3);transform:scale(1.02)}
 body.mt-dragging,body.mt-dragging *{cursor:grabbing!important}
-.mt-who{min-width:0}
-.mt-who b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mt-who .sub{font-size:12px;line-height:1.35}
-.mt-live{color:var(--live);font-weight:800;white-space:nowrap}
-.mt-on{color:var(--win);font-weight:700}
-.mt-team{font-weight:700}
-.mt-pts{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}
-.mt-pts>span{font-weight:800;font-size:18px;color:var(--gold)}
-.mt-pts>span.muted{color:var(--muted)}
+.mt-who{min-width:0;display:flex;flex-direction:column;gap:2px}
+.mt-who b{display:flex;align-items:center;gap:7px;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt-who span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt-who .pos,.mt-who .negv{font-weight:800}
+.mt-clock{color:var(--live);font-weight:700}
+.mt-dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--live);animation:mtring 1.6s ease-out infinite}
+@keyframes mtring{0%{box-shadow:0 0 0 0 rgba(224,45,60,.55)}80%,100%{box-shadow:0 0 0 6px rgba(224,45,60,0)}}
+.mt-pts{flex:none;display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}
+.mt-pts b{font-weight:800;font-size:18px;color:var(--ink)}
+.mt-pts b.na{color:var(--line-2)}
+.mt-sec-c .mt-pts b{color:var(--gold)}
 .mt-pts small{font-size:11px;color:var(--muted);white-space:nowrap}
+.mt-foot{text-align:center;font-size:13px;color:var(--muted);margin:4px 0 6px}
+.mt-link{border:0;background:none;padding:4px 2px;color:var(--sea);font-weight:700;font-size:13px}
+.mt-help{text-align:center;font-size:12px;color:var(--muted);margin:0 0 8px}
+.mt-empty{text-align:center;padding:28px 20px;border:1px dashed var(--line-2);border-radius:16px;background:var(--surface)}
+.mt-empty b{font:700 18px var(--display)}
+.mt-empty p{color:var(--muted);font-size:14px;margin:8px auto 16px;max-width:340px}
+.mt-menu-ov{position:fixed;inset:0;z-index:60;background:rgba(5,10,20,.45);display:flex;align-items:flex-end;justify-content:center}
+.mt-menu{width:min(440px,100%);margin:0 8px calc(8px + env(safe-area-inset-bottom,0px));padding:8px;display:flex;flex-direction:column;gap:2px;background:var(--surface);box-shadow:0 -10px 40px rgba(0,0,0,.25);animation:up .18s ease-out}
+@keyframes up{from{transform:translateY(24px)}}
+.mt-menu-h{padding:10px 12px 8px;display:flex;flex-direction:column}
+.mt-menu-h span{font-size:12px;color:var(--muted)}
+.mt-menu button{border:0;background:none;text-align:left;padding:13px 12px;border-radius:10px;font-weight:700;font-size:15px}
+.mt-menu button:hover{background:var(--surface-2)}
+.mt-menu button.danger{color:var(--loss)}
+.mt-menu button.cancel{color:var(--muted);text-align:center;border-top:1px solid var(--line);border-radius:0 0 10px 10px}
 .mt-ed{display:flex;flex-direction:column;gap:14px}
 .mt-chips{display:flex;flex-wrap:wrap;gap:8px}
 .mt-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 6px 5px 10px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line-2);max-width:100%;min-width:0}
 .mt-chip b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .mt-chip small{font-size:11px;color:var(--muted)}
 .mt-chip button{flex:none;width:22px;height:22px;border-radius:50%;border:0;background:var(--line-2);font-size:11px;color:var(--ink)}
+.mt-sech{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 0 8px}
+.mt-sech h3{margin:0;font-size:15px;font-weight:800}
 .mt-pick .input{width:100%;margin-bottom:10px}
-#mt-results{display:flex;flex-direction:column;gap:2px;max-height:46vh;overflow-y:auto}
+#mt-results,#mt-rresults{display:flex;flex-direction:column;gap:2px;max-height:60vh;overflow-y:auto}
 .mt-res{display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px;border:0;border-radius:10px;background:none;text-align:left}
 .mt-res:hover{background:var(--surface-2)}
 .mt-res .who b{font-size:14px}
 .mt-addb{font-size:12px;font-weight:800;color:var(--sea);white-space:nowrap}
 .mt-res.taken .mt-addb{color:var(--win)}
 .mt-savebar{position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0 calc(6px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line)}
-@media (max-width:420px){.mt-wc{padding:8px 10px}.mt-total .big{font-size:34px}}
 footer{color:var(--muted);font-size:12px;padding-block:24px 32px;border-top:1px solid var(--line)}
 
 /* phone: tabs become a bottom bar */
@@ -723,7 +744,7 @@ async function tick() {
     S.fpPromise = null; S.agg = null; S.standings = null; S.players = { Accumulated: null, PerGame: null }; ensureFP();
   }
   if (S.tab === "games") renderGames();
-  if (S.tab === "myteam" && !$(".sheet") && !MT.drag && !MT.sel) renderMyTeam();   // your players' live games only
+  if (S.tab === "myteam" && !$(".sheet") && !$("#mt-menu") && !MT.drag && !MT.sel) renderMyTeam();   // your players' live games only
   refreshOpenGame();                                  // box score only if you have a live game open
 }
 const roundKey = (g) => g.phase + "|" + g.round;
@@ -1176,28 +1197,21 @@ async function mtLine(code, team, rk, boxFor) {
   const res = g.played ? resultFor(g, tc) : null;
   return { kind: g.played ? "final" : "live", g, team: tc, l: f.l, fp: fp(f.l, res) };
 }
-function mtStatus(x) {
-  if (!x || x.kind === "none") return "No game this round";
-  const g = x.g, home = g.home.code === x.team, opp = home ? g.away : g.home, vs = `${home ? "vs" : "@"} ${esc(opp.code)}`;
-  if (x.kind === "pending") return `${vs} · ${dtf.format(new Date(g.date))}, ${tf.format(new Date(g.date))}`;
-  if (x.kind === "error") return `${vs} · box score not available yet`;
-  if (x.kind === "final" || x.kind === "dnp") {
-    const my = home ? g.home.score : g.away.score, th = home ? g.away.score : g.home.score;
-    return `<span class="${my > th ? "pos" : "negv"}" style="font-weight:800">${my > th ? "W" : "L"}</span> ${my}–${th} ${vs}${x.kind === "dnp" ? " · <b>DNP</b>" : ""}`;
-  }
-  const L = S.live.get(g.code); let a = n(L?.ScoreA), b = n(L?.ScoreB);
-  if (String(L?.CodeTeamA || "").trim() === g.away.code) [a, b] = [b, a];
-  const my = home ? a : b, th = home ? b : a, clock = L ? liveLabel(L).replace(/^Live( · )?/, "") : "";
-  return `<span class="mt-live">● ${clock || "Live"}</span> ${my}–${th} ${vs}${x.kind === "notyet" ? " · not on court yet" : x.l?.on ? ' · <span class="mt-on">on court</span>' : ""}`;
-}
 
 /* ----- page ----- */
+const shortWhen = (d) => new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(d) + " " + tf.format(d);
 async function renderMyTeam(opts = {}) {
   if (S.tab !== "myteam" || MT.drag) return;
   const tok = ++MT.tok, rs = mtRounds();
   if (!MT.round || !rs.includes(MT.round)) MT.round = defaultRound();
   const rk = MT.round, d = mtData(), me = mtEntry(d, rk);
-  if (!me || !me.e.squad.length) { MT.sel = null; $("#main").innerHTML = mtHead(rk) + `<div class="empty"><p style="margin:0 0 14px"><b>No players yet.</b> Step 1: choose the players in your fantasy team. Step 2: drag them into Captain, Starters, 6th man, Bench and Reserve.</p><button class="btn primary" data-mt-edit>Choose players</button></div>${mtBackupLink()}`; return; }
+  if (!me || !me.e.squad.length) {
+    MT.sel = null;
+    $("#main").innerHTML = `<div class="mt-head card">${mtRoundNav(rk)}</div>
+      <div class="mt-empty"><b>Build your team</b><p>Choose the players in your fantasy team, then drag them into Captain, Starters, 6th man, Bench and Reserve.</p><button class="btn primary" data-mt-edit>Choose players</button></div>
+      <div class="mt-foot"><button class="mt-link" data-mt-backup>Restore from a backup code</button></div>`;
+    return;
+  }
   const roundGames = S.games.filter(g => roundKey(g) === rk);
   if (me.from && roundGames.some(g => g.played || ["live", "ended"].includes(gameState(g)))) { d.rounds[rk] = me.e; mtSave(d); }   // keep this round's board once it starts
   if (MT.linesRound !== rk || opts.fresh) { MT.lines = {}; MT.linesRound = rk; if (!$("#mt-board") || opts.fresh) paintBoard(true); }
@@ -1210,14 +1224,28 @@ async function renderMyTeam(opts = {}) {
   const lines = await Promise.all(codes.map(c => mtLine(c, mtTeamOf(c, d), rk, boxFor).catch(() => ({ kind: "error" }))));
   if (tok !== MT.tok || S.tab !== "myteam" || MT.linesRound !== rk) return;
   MT.lines = Object.fromEntries(codes.map((c, k) => [c, lines[k]]));
-  if (!MT.drag) paintBoard();
+  if (!MT.drag && !$("#mt-menu")) paintBoard();
 }
-const mtHead = (rk) => { const rs = mtRounds(), i = rs.indexOf(rk);
-  return `<h2 class="mt-title">My Team</h2><div class="sec-h"><div class="roundnav">
-    <button class="btn" data-mtrnav="-1" ${i <= 0 ? "disabled" : ""} aria-label="Previous round">‹</button>
-    <strong>${esc(roundLabel(rk))}</strong>
-    <button class="btn" data-mtrnav="1" ${i >= rs.length - 1 ? "disabled" : ""} aria-label="Next round">›</button></div>
-    <span class="sub">Saved on this device only</span></div>`; };
+function mtRoundNav(rk) {
+  const rs = mtRounds(), i = rs.indexOf(rk);
+  return `<div class="mt-rnav"><button class="mt-nb" data-mtrnav="-1" ${i <= 0 ? "disabled" : ""} aria-label="Previous round">‹</button>
+    <div><small>My Team</small><b>${esc(roundLabel(rk))}</b></div>
+    <button class="mt-nb" data-mtrnav="1" ${i >= rs.length - 1 ? "disabled" : ""} aria-label="Next round">›</button></div>`;
+}
+function mtStatusShort(x) {
+  if (!x || x.kind === "none") return "No game";
+  const g = x.g, home = g.home.code === x.team, opp = home ? g.away : g.home, vs = `${home ? "vs" : "@"} ${esc(opp.code)}`;
+  if (x.kind === "pending") return `${vs} · ${shortWhen(new Date(g.date))}`;
+  if (x.kind === "error") return vs;
+  if (x.kind === "final" || x.kind === "dnp") {
+    const my = home ? g.home.score : g.away.score, th = home ? g.away.score : g.home.score;
+    return `<span class="${my > th ? "pos" : "negv"}">${my > th ? "W" : "L"}</span> ${my}–${th} ${vs}${x.kind === "dnp" ? " · DNP" : ""}`;
+  }
+  const L = S.live.get(g.code); let a = n(L?.ScoreA), b = n(L?.ScoreB);
+  if (String(L?.CodeTeamA || "").trim() === g.away.code) [a, b] = [b, a];
+  const my = home ? a : b, th = home ? b : a, clock = L ? liveLabel(L).replace(/^Live( · )?/, "") : "Live";
+  return `<span class="mt-clock">${clock}</span> · ${my}–${th} ${vs}${x.kind === "notyet" ? " · on bench" : x.l?.on ? " · on court" : ""}`;
+}
 function paintBoard(loading) {
   if (S.tab !== "myteam") return;
   const rk = MT.round, d = mtData(), me = mtEntry(d, rk); if (!me) return;
@@ -1226,40 +1254,78 @@ function paintBoard(loading) {
   for (const slot of POS) { const c = e.pos[slot], x = c && MT.lines[c]; if (!x) continue;
     if (x.fp != null) total += x.fp * mtMult(slot, e);
     if (x.kind === "live" || x.kind === "notyet") live++; else if (x.kind === "pending") toPlay++; else if (x.kind === "final" || x.kind === "dnp") done++; }
-  const card = (slot) => {
+  const row = (slot) => {
     const code = e.pos[slot], m = mtMult(slot, e), sel = MT.sel === slot ? "selected" : "";
-    if (!code) return `<div class="mt-row empty-slot ${sel}" data-slot="${slot}"><span class="mt-grip" aria-hidden="true"></span><div class="mt-who"><span class="sub">${MT.sel ? "Tap to move the selected player here" : "Drop a player here"}</span></div><div></div></div>`;
+    if (!code) return `<div class="mt-row empty ${sel}" data-slot="${slot}"><span>${MT.sel ? "Move here" : "+ Add player"}</span></div>`;
     const x = MT.lines[code], has = x && x.fp != null && ["final", "live", "dnp", "notyet"].includes(x.kind), val = has ? x.fp * m : null;
-    return `<div class="mt-row ${x?.kind === "live" ? "is-live" : ""} ${sel}" data-slot="${slot}" data-code="${esc(code)}">
-      <span class="mt-grip" aria-hidden="true">⠿</span>
-      <div class="mt-who"><b>${esc(mtName(code, d))}</b><div class="sub"><span class="mt-team">${esc(x?.team || mtTeamOf(code, d))}</span> · ${x ? mtStatus(x) : loading ? "loading…" : ""}</div></div>
-      <div class="mt-pts"><span class="${val == null ? "muted" : val < 0 ? "negv" : ""}">${val == null ? "–" : f1(val)}</span><small>${has ? `${f1(x.fp)} × ${m}` : `× ${m}`}</small></div></div>`;
+    const dot = x?.kind === "live" ? `<i class="mt-dot" title="Playing now"></i>` : "";
+    return `<div class="mt-row ${sel}" data-slot="${slot}" data-code="${esc(code)}">
+      <div class="mt-who"><b>${dot}${esc(mtName(code, d))}</b><span>${esc(x?.team || mtTeamOf(code, d))} · ${x ? mtStatusShort(x) : loading ? "…" : ""}</span></div>
+      <div class="mt-pts"><b class="${val == null ? "na" : val < 0 ? "negv" : ""}">${val == null ? "–" : f1(val)}</b>${has && m !== 1 ? `<small>${f1(x.fp)} × ${m}</small>` : ""}</div></div>`;
   };
-  const boxMult = (k) => k === "c" ? (e.tc ? "×3 · Triple Captain" : "×2") : k === "s" || k === "x" ? "×1" : k === "b" ? (e.bb ? "×1 · Bench Boost" : "×0.5") : "×0";
-  const wc = (k, label, desc) => `<button class="mt-wc ${e[k] ? "on" : ""}" data-mt-wc="${k}" aria-pressed="${!!e[k]}"><b>${label}</b><span>${desc}</span><i>${e[k] ? "Used ✓" : "Use wildcard"}</i></button>`;
-  const wcs = !e.asked && !finished
-    ? `<div class="card box mt-ask"><h3>Using a wildcard in ${esc(roundLabel(rk))}?</h3><p class="sub" style="margin:-4px 0 12px">Tap the ones you're playing this round, then confirm. You can change it any time.</p>
-        <div class="mt-wcs">${wc("bb", "Bench Boost", "Bench earns 100% instead of 50%")}${wc("tc", "Triple Captain", "Captain earns 300% instead of 200%")}</div>
-        <button class="btn primary" data-mt-asked style="margin-top:12px">Confirm</button></div>`
-    : `<div class="mt-wcs mt-wcbar">${wc("bb", "Bench Boost", "Bench ×1")}${wc("tc", "Triple Captain", "Captain ×3")}</div>`;
-  const missing = SQUAD_MAX - e.squad.length;
-  $("#main").innerHTML = mtHead(rk) + `
-    <div class="mt-total card" id="mt-total"><div><div class="lab">Fantasy Points · ${esc(roundLabel(rk))}</div><div class="big">${loading ? "…" : f1(total)}</div>
-      <div class="sub">${live ? `<span class="pill live">${live} live</span> ` : ""}${done} finished · ${toPlay} to play${!e.pos.c0 ? ' · <b class="negv">no captain</b>' : ""}</div></div>
-      <div class="mt-tbtns">${live ? `<button class="btn" data-mt-refresh>↻ Refresh</button>` : ""}<button class="btn" data-mt-edit>Edit players</button></div></div>
-    ${me.from ? `<p class="note" style="margin:0 0 12px">Starting from your ${esc(roundLabel(me.from))} lineup. Any change you make here applies to ${esc(roundLabel(rk))}.</p>` : ""}
-    ${missing > 0 ? `<p class="note" style="margin:0 0 12px">${e.squad.length} of ${SQUAD_MAX} players chosen. <button class="btn" data-mt-edit style="padding:4px 10px;font-size:12px">Add players</button></p>` : ""}
-    ${wcs}
-    <p class="mt-hint">${MT.sel ? "<b>Player selected.</b> Tap another box to move or swap him, or tap him again to cancel." : "Drag players between boxes (on a phone, press and hold, then drag). Or tap a player, then tap where he should go."}</p>
-    <div id="mt-board">${BOXES.map(([k, title, slots]) => `<section class="mt-sec"><div class="mt-sech"><h3>${title}</h3><span class="sub">${boxMult(k)}</span></div><div class="card mt-list mt-box-${k}">${slots.map(card).join("")}</div></section>`).join("")}</div>
-    <p class="note">${live ? "Live points update every 20 seconds while this tab is open; the win/loss bonus is added at the final buzzer. " : ""}Points = player's Fantasy Points × box multiplier. DNP = 0.</p>
-    ${mtBackupLink()}`;
+  const mult = (k) => k === "c" ? (e.tc ? "×3" : "×2") : k === "s" || k === "x" ? "×1" : k === "b" ? (e.bb ? "×1" : "×0.5") : "×0";
+  const chip = (k, label) => `<button class="mt-wc ${e[k] ? "on" : ""}" data-mt-wc="${k}" aria-pressed="${!!e[k]}">${e[k] ? "✓ " : ""}${label}</button>`;
+  const ask = !e.asked && !finished;
+  const selName = MT.sel && e.pos[MT.sel] ? mtName(e.pos[MT.sel], d) : "";
+  $("#main").innerHTML = `<div class="mt-head card">${mtRoundNav(rk)}
+      <div class="mt-score"><b>${loading ? "…" : f1(total)}</b><span>Fantasy Points</span></div>
+      <div class="mt-meta">${live ? `<span class="mt-livetag"><i class="mt-dot"></i>${live} playing</span>` : ""}<span>${done} done · ${toPlay} to play</span>${!e.pos.c0 ? '<span class="negv">No captain</span>' : ""}</div>
+      <div class="mt-wcs ${ask ? "asking" : ""}">${ask ? `<span class="mt-q">Wildcards this round?</span>` : ""}${chip("bb", "Bench Boost")}${chip("tc", "Triple Captain")}${ask ? `<button class="mt-wc done" data-mt-asked>Done</button>` : ""}</div>
+    </div>
+    ${MT.sel ? `<div class="mt-selbar"><span>Tap where <b>${esc(selName)}</b> should go</span><button class="mt-link" data-mt-cancel>Cancel</button></div>` : ""}
+    ${me.from ? `<p class="mt-from">Same lineup as ${esc(roundLabel(me.from))}. Changes here apply to ${esc(roundLabel(rk))} only.</p>` : ""}
+    <div id="mt-board">${BOXES.map(([k, title, slots]) => `<section class="mt-sec mt-sec-${k}"><div class="mt-lab"><span>${title}</span><em>${mult(k)}</em></div><div class="mt-list">${slots.map(row).join("")}</div></section>`).join("")}</div>
+    <div class="mt-foot">${live ? `<button class="mt-link" data-mt-refresh>↻ Refresh</button> · ` : ""}<button class="mt-link" data-mt-edit>Edit players</button> · <button class="mt-link" data-mt-backup>Back up</button></div>
+    <p class="mt-help">Hold and drag a player to move him, or tap him for options. Saved on this device.</p>`;
 }
-const mtBackupLink = () => `<p class="note" style="margin-top:16px"><button class="btn" data-mt-backup>Back up or move team</button></p>`;
 function mtSwap(a, b) {
   if (a === b) return;
   mtWithEntry(e => { const x = e.pos[a], y = e.pos[b]; if (y) e.pos[a] = y; else delete e.pos[a]; if (x) e.pos[b] = x; else delete e.pos[b]; });
   paintBoard();
+}
+
+/* ----- player menu ----- */
+function openMtMenu(slot) {
+  const d = mtData(), me = mtEntry(d, MT.round), code = me?.e.pos[slot]; if (!code) return;
+  closeMtMenu();
+  document.body.insertAdjacentHTML("beforeend", `<div id="mt-menu" class="mt-menu-ov" data-mt-menuclose><div class="mt-menu card" role="dialog" aria-label="${esc(mtName(code, d))}">
+    <div class="mt-menu-h"><b>${esc(mtName(code, d))}</b><span>${esc(mtTeamOf(code, d))}</span></div>
+    <button data-mt-act="swap" data-slot="${slot}">Swap or move</button>
+    <button data-mt-act="replace" data-slot="${slot}">Replace with another player</button>
+    <button data-mt-act="stats" data-slot="${slot}">Player stats</button>
+    <button data-mt-act="remove" data-slot="${slot}" class="danger">Remove from team</button>
+    <button data-mt-menuclose class="cancel">Cancel</button></div></div>`);
+}
+function closeMtMenu() { $("#mt-menu")?.remove(); }
+
+/* ----- replace a player (or fill an empty box) from the whole player pool ----- */
+async function openReplace(slot) {
+  const d = mtData(), me = mtEntry(d, MT.round), old = me?.e.pos[slot];
+  MT.rep = { slot, old, q: "" }; openGameCode = null;
+  sheet(old ? `Replace ${mtName(old, d)}` : "Add a player", `<div class="mt-ed"><div class="card box mt-pick">
+      <input class="input" id="mt-rsearch" type="search" placeholder="Search player or team" autocomplete="off">
+      <div id="mt-rresults"><div class="loading">Loading players…</div></div></div></div>`, () => openReplace(slot));
+  try { MT.pl = await loadPlayers("PerGame"); } catch (err) { MT.pl = []; }
+  paintReplace();
+}
+function paintReplace() {
+  if (!$("#mt-rresults") || !MT.pl) return;
+  const d = mtData(), me = mtEntry(d, MT.round), inTeam = new Set(me?.e.squad || []), q = MT.rep.q.trim().toLowerCase();
+  const score = (p) => { const a = S.agg?.get(p.code); return a && a.gp ? a.fp / a.gp : p.pir; };
+  const list = MT.pl.filter(p => !inTeam.has(p.code) && (!q || p.name.toLowerCase().includes(q) || p.raw.toLowerCase().includes(q) || p.team.toLowerCase().includes(q) || (p.teamName || "").toLowerCase().includes(q)))
+    .sort((a, b) => score(b) - score(a)).slice(0, 50);
+  $("#mt-rresults").innerHTML = list.length ? list.map(p => { const a = S.agg?.get(p.code);
+    return `<button class="mt-res" data-mt-rep="${esc(p.code)}"><img class="crest" src="${esc(p.crest)}" alt="" loading="lazy" width="24" height="24"><span class="who"><b>${esc(p.name)}</b><small>${esc(p.team)} · ${p.gp} GP</small></span><span class="mt-addb">${a && a.gp ? f1(a.fp / a.gp) + " FP" : ""}</span></button>`; }).join("")
+    : '<p class="sub">No players match.</p>';
+}
+function mtReplace(code) {
+  const { slot, old } = MT.rep, p = MT.pl.find(x => x.code === code); if (!p) return;
+  const d = mtData(), me = mtEntry(d, MT.round); if (!me) return;
+  const e = me.e;
+  if (!old && e.squad.length >= SQUAD_MAX) { closeSheet(); return; }
+  e.squad = e.squad.filter(c => c !== old).concat(code); e.pos[slot] = code;
+  d.meta[code] = { n: p.name, t: p.team }; d.rounds[MT.round] = e; mtSave(d);
+  closeSheet(); renderMyTeam({ fresh: true });
 }
 
 /* ----- drag & drop (mouse: drag; touch: press and hold, then drag) and tap-to-swap ----- */
@@ -1311,7 +1377,8 @@ document.addEventListener("click", (ev) => {
   const row = ev.target.closest("#mt-board .mt-row"); if (!row || MT.justDragged) return;
   const slot = row.dataset.slot;
   if (MT.sel) { const from = MT.sel; MT.sel = null; if (from === slot) return paintBoard(); return mtSwap(from, slot); }
-  if (row.dataset.code) { MT.sel = slot; paintBoard(); }
+  if (row.dataset.code) return openMtMenu(slot);
+  return openReplace(slot);                                   // empty box: add a player straight into it
 });
 
 /* ----- step 1: choose players ----- */
@@ -1384,8 +1451,19 @@ function mtRestore() {
 
 /* ----- buttons ----- */
 document.addEventListener("click", (ev) => {
-  const t = ev.target.closest("[data-mt-edit],[data-mt-add],[data-mt-del],[data-mt-save],[data-mt-wc],[data-mt-asked],[data-mtrnav],[data-mt-backup],[data-mt-copy],[data-mt-restore],[data-mt-refresh]");
+  const t = ev.target.closest("[data-mt-act],[data-mt-menuclose],[data-mt-rep],[data-mt-cancel],[data-mt-edit],[data-mt-add],[data-mt-del],[data-mt-save],[data-mt-wc],[data-mt-asked],[data-mtrnav],[data-mt-backup],[data-mt-copy],[data-mt-restore],[data-mt-refresh]");
   if (!t) return;
+  if (t.dataset.mtAct) {
+    const slot = t.dataset.slot, act = t.dataset.mtAct, code = mtEntry(mtData(), MT.round)?.e.pos[slot]; closeMtMenu();
+    if (act === "swap") { MT.sel = slot; return paintBoard(); }
+    if (act === "replace") return openReplace(slot);
+    if (act === "stats" && code) return openPlayer(code);
+    if (act === "remove") { mtWithEntry(e => { e.squad = e.squad.filter(c => c !== e.pos[slot]); delete e.pos[slot]; }); return renderMyTeam({ fresh: true }); }
+    return;
+  }
+  if (t.hasAttribute("data-mt-menuclose")) { if (ev.target === t || t.tagName === "BUTTON") closeMtMenu(); return; }
+  if (t.dataset.mtRep) return mtReplace(t.dataset.mtRep);
+  if (t.hasAttribute("data-mt-cancel")) { MT.sel = null; return paintBoard(); }
   if (t.hasAttribute("data-mt-edit")) return openSquadEditor();
   if (t.dataset.mtAdd) return mtToggle(t.dataset.mtAdd);
   if (t.dataset.mtDel) return mtToggle(t.dataset.mtDel);
@@ -1398,7 +1476,10 @@ document.addEventListener("click", (ev) => {
   if (t.hasAttribute("data-mt-restore")) return mtRestore();
   if (t.hasAttribute("data-mt-refresh")) { t.disabled = true; t.textContent = "Refreshing…"; pollLive().then(() => renderMyTeam()); return; }
 });
-document.addEventListener("input", (ev) => { if (ev.target.id === "mt-search") { MT.q = ev.target.value; paintResults(); } });
+document.addEventListener("input", (ev) => {
+  if (ev.target.id === "mt-search") { MT.q = ev.target.value; paintResults(); }
+  if (ev.target.id === "mt-rsearch") { MT.rep.q = ev.target.value; paintReplace(); }
+});
 
 /* ================= standings ================= */
 const formHtml = (f) => `<span class="form">${(f || []).map(x => `<i class="${esc(x)}">${esc(x)}</i>`).join("")}</span>`;
@@ -1481,7 +1562,7 @@ document.addEventListener("click", (e) => {
   if (t.hasAttribute("data-histmore")) return renderHistory(t.dataset.histmore, t.dataset.opp, +t.dataset.back);
   if (t.hasAttribute("data-back")) return back();
   if (t.hasAttribute("data-info")) return openInfo();
-  if (t.dataset.tab) { S.tab = t.dataset.tab; try { localStorage.setItem("sm-tab", S.tab); } catch (x) {} closeSheet(); window.scrollTo(0, 0); return render(); }
+  if (t.dataset.tab) { closeMtMenu(); MT.sel = null; S.tab = t.dataset.tab; try { localStorage.setItem("sm-tab", S.tab); } catch (x) {} closeSheet(); window.scrollTo(0, 0); return render(); }
   if (t.dataset.rnav) { const rounds = [...new Set(S.games.map(roundKey))]; S.round = rounds[rounds.indexOf(S.round) + +t.dataset.rnav] || S.round; return renderGames(); }
   if (t.dataset.h2h) return renderH2H(+t.dataset.h2h);
   if (t.dataset.hist) return renderHistory(t.dataset.hist, $("#hopp").value, HISTORY_SEASONS);
@@ -1496,7 +1577,7 @@ document.addEventListener("change", (e) => {
   if (e.target.id === "pteam") { S.team = e.target.value; renderPlayers(); }
   if (e.target.id === "season") { S.season = +e.target.value; closeSheet(); loadSeason(); }
 });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeSheet(); closeMtMenu?.(); } });
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && S.games.length) tick(); });
 
 $("#season").innerHTML = SEASONS.map(y => `<option value="${y}">${seasonLabel(y)}</option>`).join("");
