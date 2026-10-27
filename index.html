@@ -20,7 +20,7 @@
   --ink:#0d1b2a; --muted:#64748b; --sea:#1d5fd1; --sea-soft:#e7effc;
   --gold:#a8700f; --gold-bright:#e3a72f; --gold-soft:#fdf2db;
   --live:#e02d3c; --win:#15924a; --loss:#d63a3a;
-  --shadow:0 1px 2px rgba(13,27,42,.05),0 8px 24px -8px rgba(13,27,42,.12); --hdr:#0d1b2a; --on-sea:#ffffff;
+  --shadow:0 1px 2px rgba(13,27,42,.05),0 8px 24px -8px rgba(13,27,42,.12); --hdr:#0d1b2a; --on-sea:#ffffff; --mine:#fff4d6;
   --radius:16px;
   --display:"Unbounded","Arial Black",system-ui,sans-serif;
   --ui:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -31,13 +31,13 @@
   --ink:#e9eef6; --muted:#8fa1b8; --sea:#6ea6ff; --sea-soft:rgba(110,166,255,.12);
   --gold:#f3c04f; --gold-bright:#f3c04f; --gold-soft:rgba(243,192,79,.13);
   --live:#ff4d5e; --win:#3fd58a; --loss:#ff6b6b;
-  --shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -12px rgba(0,0,0,.6); --hdr:#0d1726; --on-sea:#06142b; color-scheme:dark}}
+  --shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -12px rgba(0,0,0,.6); --hdr:#0d1726; --on-sea:#06142b; --mine:rgba(243,192,79,.11); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#09101b; --surface:#111a28; --surface-2:#172236; --line:#1f2c42; --line-2:#2a3a55;
   --ink:#e9eef6; --muted:#8fa1b8; --sea:#6ea6ff; --sea-soft:rgba(110,166,255,.12);
   --gold:#f3c04f; --gold-bright:#f3c04f; --gold-soft:rgba(243,192,79,.13);
   --live:#ff4d5e; --win:#3fd58a; --loss:#ff6b6b;
-  --shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -12px rgba(0,0,0,.6); --hdr:#0d1726; --on-sea:#06142b; color-scheme:dark}
+  --shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -12px rgba(0,0,0,.6); --hdr:#0d1726; --on-sea:#06142b; --mine:rgba(243,192,79,.11); color-scheme:dark}
 
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -178,6 +178,20 @@ tbody tr:hover td.fpc{background:var(--gold-soft)}
 tr.grp td{background:var(--surface-2)!important;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 10px}
 tr.tot td{font-weight:800;background:var(--surface-2)}
 tr.oncourt td:first-child{box-shadow:inset 3px 0 0 var(--live)}
+tr.mine td,tr.mine td:first-child{background:var(--mine)}
+tr.mine:hover td{background:var(--mine)}
+.mine-b{display:inline-grid;place-items:center;min-width:22px;height:18px;padding:0 5px;border-radius:5px;font-size:10px;font-weight:800;letter-spacing:.02em;background:var(--sea-soft);color:var(--sea);flex:none}
+.mine-b.mine-c{background:var(--gold-bright);color:#1a1204}
+.mine-b.mine-s,.mine-b.mine-x{background:var(--gold-soft);color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold-bright)}
+.mine-b.mine-r{background:var(--surface-2);color:var(--muted)}
+.mine-sum{padding:12px 14px;border-color:var(--gold-bright)}
+.mine-sum .lab{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.mine-list{display:flex;flex-wrap:wrap;gap:6px}
+.mine-it{display:inline-flex;align-items:center;gap:7px;padding:5px 10px 5px 6px;border-radius:99px;background:var(--surface-2);cursor:pointer;max-width:100%;min-width:0}
+.mine-it b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.mine-it em{font-style:normal;font-weight:800;font-size:13px;color:var(--gold)}
+.mine-tot{margin-top:8px;font-size:12px;font-weight:700;color:var(--muted)}
+
 .pos{color:var(--win)}.negv{color:var(--loss)}
 .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
 .filters .input{flex:1 1 180px}
@@ -901,21 +915,37 @@ function renderBox(g, b) {
   // fantasy MVP
   let mvp = null;
   b.teams.forEach((T, ti) => { const res = live ? null : resultFor(g, teamOf(g, b, ti)); for (const l of T.players) { if (!l.sec) continue; const v = fp(l, res); if (!mvp || v > mvp.v) mvp = { l, v, ti }; } });
+  // Your My Team players in this game, using the lineup for this game's round
+  const mt = myTeamFor(roundKey(g)), mineRows = [];
+  if (mt) b.teams.forEach((T, ti) => { const res = live ? null : resultFor(g, teamOf(g, b, ti));
+    for (const l of T.players) { const slot = mt.mine.get(l.code); if (slot) mineRows.push({ l, slot, pts: l.sec ? fp(l, res) * mtMult(slot, mt.e) : 0 }); } });
+  const order = (sl) => POS.indexOf(sl);
+  mineRows.sort((a, b2) => order(a.slot) - order(b2.slot));
+  const mineHtml = mt && mineRows.length ? `<div class="mine-sum card"><div class="lab">Your team · ${esc(roundLabel(roundKey(g)))}</div>
+      <div class="mine-list">${mineRows.map(r => `<span class="mine-it" data-player="${esc(r.l.code)}">${mineBadge(r.slot)}<b>${esc(nice(r.l.name))}</b><em class="${r.pts < 0 ? "negv" : ""}">${r.l.sec ? f1(r.pts) : "DNP"}</em></span>`).join("")}</div>
+      <div class="mine-tot">${f1(mineRows.reduce((s2, r) => s2 + r.pts, 0))} pts for you from this game${live ? " so far" : ""}</div></div>` : "";
   const mvpHtml = mvp ? `<div class="mvp card"><img class="crest" src="${esc((mvp.ti === 0 ? g.home : g.away).crest)}" alt="" width="36" height="36"><div style="flex:1;min-width:0"><div class="lab">${live ? "Fantasy leader so far" : "Fantasy MVP"}</div><b class="mvp-n">${esc(nice(mvp.l.name))}</b><div class="sub">${mvp.l.pts} pts · ${mvp.l.tr} reb · ${mvp.l.ast} ast</div></div>${fpChip(mvp.v, true)}</div>` : "";
-  $("#gbody").innerHTML = `<div style="display:flex;flex-direction:column;gap:16px">` + matchHead(g, hs, as, mid) + bar + qt + mvpHtml +
-    b.teams.map((T, ti) => teamBox(T, ti === 0 ? g.home : g.away, live ? null : resultFor(g, teamOf(g, b, ti)))).join("") +
+  $("#gbody").innerHTML = `<div style="display:flex;flex-direction:column;gap:16px">` + matchHead(g, hs, as, mid) + bar + qt + mineHtml + mvpHtml +
+    b.teams.map((T, ti) => teamBox(T, ti === 0 ? g.home : g.away, live ? null : resultFor(g, teamOf(g, b, ti)), mt)).join("") +
     `<p class="note">${live ? "Fantasy Points during a live game leave out the win/loss bonus until the final buzzer. Red edge = on court now. " : ""}Tap a player for their season, game log and history against any team. FP = Fantasy Points, PIR = EuroLeague Performance Index Rating.</p></div>`;
 }
-function teamBox(T, club, res) {
+// Lineup that applied in a round (that round's own, or carried over from the round before); null if none.
+function myTeamFor(rk) {
+  try { const me = mtEntry(mtData(), rk); if (!me || !me.e.squad.length) return null;
+    return { e: me.e, mine: new Map(Object.entries(me.e.pos).map(([slot, code]) => [code, slot])) }; } catch (e) { return null; }
+}
+const MINE_LABEL = { c: ["C", "Captain"], s: ["S", "Starter"], x: ["6th", "6th man"], b: ["B", "Bench"], r: ["R", "Reserve"] };
+const mineBadge = (slot) => `<span class="mine-b mine-${slot[0]}" title="${MINE_LABEL[slot[0]][1]} in your team">${MINE_LABEL[slot[0]][0]}</span>`;
+function teamBox(T, club, res, mt) {
   const rows = T.players.map(l => ({ l, v: fp(l, res) }));
   const maxV = Math.max(...rows.filter(r => r.l.sec).map(r => r.v));
   const starters = rows.filter(r => r.l.st), bench = rows.filter(r => !r.l.st);
   const pm = (v) => v == null ? "" : `<span class="${v > 0 ? "pos" : v < 0 ? "negv" : ""}">${v > 0 ? "+" : ""}${v}</span>`;
-  const line = ({ l, v }) => `<tr class="click ${l.on ? "oncourt" : ""}" data-player="${esc(l.code)}">
-    <td><div class="pn"><span class="jn">${esc(l.dorsal)}</span><b>${esc(nice(l.name))}</b></div></td>
+  const line = ({ l, v }) => { const slot = mt?.mine.get(l.code); return `<tr class="click ${l.on ? "oncourt" : ""} ${slot ? "mine" : ""}" data-player="${esc(l.code)}">
+    <td><div class="pn"><span class="jn">${esc(l.dorsal)}</span><b>${esc(nice(l.name))}</b>${slot ? mineBadge(slot) : ""}</div></td>
     <td class="fpc">${l.sec ? f1(v) + (v === maxV ? " ★" : "") : "–"}</td>
     <td class="key">${l.pts}</td><td>${l.tr}</td><td>${l.ast}</td><td>${l.stl}</td><td>${l.blk}</td><td>${l.tov}</td><td>${mmss(l.sec)}</td>
-    <td>${l.m2}/${l.a2}</td><td>${l.m3}/${l.a3}</td><td>${l.ftm}/${l.fta}</td><td>${l.or}</td><td>${l.dr}</td><td>${l.ba}</td><td>${l.pf}</td><td>${l.fd}</td><td>${l.pir}</td><td>${pm(l.pm)}</td></tr>`;
+    <td>${l.m2}/${l.a2}</td><td>${l.m3}/${l.a3}</td><td>${l.ftm}/${l.fta}</td><td>${l.or}</td><td>${l.dr}</td><td>${l.ba}</td><td>${l.pf}</td><td>${l.fd}</td><td>${l.pir}</td><td>${pm(l.pm)}</td></tr>`; };
   const t = T.tot;
   const tot = t ? `<tr class="tot"><td>Team totals</td><td class="fpc"></td><td>${t.pts}</td><td>${t.tr}</td><td>${t.ast}</td><td>${t.stl}</td><td>${t.blk}</td><td>${t.tov}</td><td></td><td>${t.m2}/${t.a2}</td><td>${t.m3}/${t.a3}</td><td>${t.ftm}/${t.fta}</td><td>${t.or}</td><td>${t.dr}</td><td>${t.ba}</td><td>${t.pf}</td><td>${t.fd}</td><td>${t.pir}</td><td></td></tr>` : "";
   const cols = 19;
