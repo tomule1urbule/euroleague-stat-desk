@@ -175,11 +175,13 @@ tbody tr:hover td.fpc{background:var(--gold-soft)}
 .pn b{font-weight:700}
 .pn .jn{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:7px;background:var(--surface-2);font-size:12px;font-weight:800;color:var(--muted)}
 .pn .st{font-size:10px;font-weight:800;color:var(--sea);background:var(--sea-soft);padding:1px 5px;border-radius:5px}
-tr.grp td{background:var(--surface-2)!important;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 10px}
+tr.grp td{position:static!important;background:var(--surface-2)!important;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 10px}
+.grp-l{position:sticky;left:10px}
 tr.tot td{font-weight:800;background:var(--surface-2)}
 tr.oncourt td:first-child{box-shadow:inset 3px 0 0 var(--live)}
-tr.mine td,tr.mine td:first-child{background:var(--mine)}
-tr.mine:hover td{background:var(--mine)}
+/* gold tint layered on a solid background, so the frozen name column never shows the columns scrolling underneath */
+tr.mine td,tr.mine:hover td{background-color:var(--surface);background-image:linear-gradient(var(--mine),var(--mine))}
+tr.mine td.fpc{background-image:linear-gradient(var(--gold-soft),var(--gold-soft))}
 .mine-b{display:inline-grid;place-items:center;min-width:22px;height:18px;padding:0 5px;border-radius:5px;font-size:10px;font-weight:800;letter-spacing:.02em;background:var(--sea-soft);color:var(--sea);flex:none}
 .mine-b.mine-c{background:var(--gold-bright);color:#1a1204}
 .mine-b.mine-s,.mine-b.mine-x{background:var(--gold-soft);color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold-bright)}
@@ -1028,7 +1030,7 @@ function teamBox(T, club, res, mt) {
   const cols = 19;
   return `<section><div class="teamh"><img class="crest" src="${esc(club.crest)}" alt="" width="30" height="30"><div><h3>${esc(club.name)}</h3>${T.coach ? `<div class="sub">Coach ${esc(nice(T.coach))}</div>` : ""}</div></div>
     <div class="tframe"><table class="boxt"><thead><tr><th>Player</th><th class="fpc">FP</th><th>Pts</th><th>Reb</th><th>Ast</th><th>Stl</th><th>Blk</th><th>TO</th><th>Min</th><th>2P</th><th>3P</th><th>FT</th><th>OR</th><th>DR</th><th>BA</th><th>PF</th><th>FD</th><th>PIR</th><th>+/−</th></tr></thead>
-    <tbody>${starters.length ? `<tr class="grp"><td colspan="${cols}">Starters</td></tr>` + starters.map(line).join("") : ""}${bench.length ? `<tr class="grp"><td colspan="${cols}">Bench</td></tr>` + bench.map(line).join("") : ""}${tot}</tbody></table></div></section>`;
+    <tbody>${starters.length ? `<tr class="grp"><td colspan="${cols}"><span class="grp-l">Starters</span></td></tr>` + starters.map(line).join("") : ""}${bench.length ? `<tr class="grp"><td colspan="${cols}"><span class="grp-l">Bench</span></td></tr>` + bench.map(line).join("") : ""}${tot}</tbody></table></div></section>`;
 }
 
 /* ===== upcoming game preview + head-to-head history ===== */
