@@ -642,6 +642,33 @@ function paintStale() {
 // worked out here from the complete season-totals list: every player who has appeared is included.
 const PER_GAME_KEYS = ["min", "pts", "reb", "oreb", "dreb", "ast", "stl", "blk", "tov", "pf", "fd", "fgm", "fga", "tpm", "tpa", "ftm", "fta", "pir"];
 function perGame(p) { const o = { ...p }, g = p.gp || 1; for (const k of PER_GAME_KEYS) o[k] = p[k] / g; return o; }
+/* Registered players (incl. those who haven't played yet), from the season's people list with club registrations. */
+async function loadRoster() {
+  if (S.roster) return S.roster;
+  try {
+    const d = await fresh(`roster:${S.season}`, () => getJSON("api", `/v2/competitions/${COMP}/seasons/${COMP}${S.season}/people?personType=J`), 12 * 3600e3);
+    const arr = Array.isArray(d) ? d : (d?.data || d?.people || d?.items || []);
+    const now = Date.now(), best = new Map();
+    for (const it of arr) {
+      const pe = it.person || it, code = String(pe.code || "").trim(), club = it.club || it.team || {};
+      if (!code || (it.type && it.type !== "J")) continue;
+      const end = it.endDate ? new Date(it.endDate).getTime() : Infinity, start = it.startDate ? new Date(it.startDate).getTime() : 0;
+      const current = it.active !== false && end >= now;
+      const prev = best.get(code);
+      if (!prev || (current && !prev.current) || (current === prev.current && start > prev.start))
+        best.set(code, { current, start, code, raw: pe.name || "", club: club.code || "", clubName: club.name || "", crest: club.images?.crest || "" });
+    }
+    S.roster = [...best.values()].filter(r => r.club && r.raw);
+  } catch (e) { S.roster = []; }
+  return S.roster;
+}
+// Player pool for My Team: everyone with stats this season, plus registered players who haven't played yet.
+async function loadPool() {
+  const [pl, ros] = await Promise.all([loadPlayers("PerGame"), loadRoster()]);
+  const have = new Set(pl.map(p => p.code)), extra = [];
+  for (const r of ros) if (!have.has(r.code)) extra.push({ ...perGame(flatPlayer({ player: { code: r.code, name: r.raw, team: { code: r.club, name: r.clubName, imageUrl: r.crest } } })), gp: 0, notYet: true });
+  return pl.concat(extra);
+}
 async function loadPlayers(mode) {
   if (S.players[mode]) return S.players[mode];
   if (mode === "PerGame") { const acc = await loadPlayers("Accumulated"); S.players.PerGame = acc.map(perGame); return S.players.PerGame; }
@@ -755,7 +782,7 @@ function paintProgress() {
 async function loadSeason() {
   clearInterval(S.timer);
   S.token++; S.staleKeys = new Map(); paintStale();
-  Object.assign(S, { games: [], round: null, players: { Accumulated: null, PerGame: null }, live: new Map(), standings: null, agg: null, tops: [], gameTop: new Map(), fpPromise: null, fpProg: null });
+  Object.assign(S, { roster: null, games: [], round: null, players: { Accumulated: null, PerGame: null }, live: new Map(), standings: null, agg: null, tops: [], gameTop: new Map(), fpPromise: null, fpProg: null });
   $("#main").innerHTML = `<div class="loading">Loading the ${seasonLabel(S.season)} season…</div>`;
   S.finalsAt = store.get("finat:" + S.season) || 0; S.lastSchedTry = 0;
   try { await refreshSchedule(); } catch (e) { return showError(e); }
@@ -1251,7 +1278,7 @@ function placeSquad(e) {                      // drop removed players, put new o
 }
 function mtTeamOf(code, d) {
   const p = (S.players.PerGame || S.players.Accumulated)?.find(x => x.code === code);
-  return p?.team || d.meta[code]?.t || S.agg?.get(code)?.team || "";
+  return p?.team || d.meta[code]?.t || S.agg?.get(code)?.team || S.roster?.find(r => r.code === code)?.club || "";
 }
 const mtName = (code, d) => d.meta[code]?.n || (S.players.PerGame || [])?.find(x => x.code === code)?.name || S.agg?.get(code)?.name || code;
 function mtWithEntry(fn) {                    // edit this round's entry (saving an inherited one for this round)
@@ -1328,7 +1355,8 @@ function mtStatusShort(x) {
 // Short (last) name for cards: "DE COLO, NANDO" -> "De Colo"
 function mtShort(code, d) {
   const p = (S.players.Accumulated || S.players.PerGame)?.find(x => x.code === code);
-  if (p?.raw) return nice(String(p.raw).split(",")[0]);
+  const raw = p?.raw || S.roster?.find(r => r.code === code)?.raw;
+  if (raw) return nice(String(raw).split(",")[0]);
   if (d.meta[code]?.s) return d.meta[code].s;
   const n2 = mtName(code, d); const parts = String(n2).split(" "); return parts.length > 1 ? parts.slice(1).join(" ") : n2;
 }
@@ -1422,7 +1450,7 @@ async function openReplace(slot) {
   sheet(old ? `Replace ${mtName(old, d)}` : "Add a player", `<div class="mt-ed"><div class="card box mt-pick">
       <input class="input" id="mt-rsearch" type="search" placeholder="Search player or team" autocomplete="off">
       <div id="mt-rresults"><div class="loading">Loading players…</div></div></div></div>`, () => openReplace(slot));
-  try { MT.pl = await loadPlayers("PerGame"); } catch (err) { MT.pl = []; }
+  try { MT.pl = await loadPool(); } catch (err) { MT.pl = []; }
   paintReplace();
 }
 function paintReplace() {
@@ -1432,7 +1460,7 @@ function paintReplace() {
   const list = MT.pl.filter(p => !inTeam.has(p.code) && (!q || p.name.toLowerCase().includes(q) || p.raw.toLowerCase().includes(q) || p.team.toLowerCase().includes(q) || (p.teamName || "").toLowerCase().includes(q)))
     .sort((a, b) => score(b) - score(a)).slice(0, 50);
   $("#mt-rresults").innerHTML = list.length ? list.map(p => { const a = S.agg?.get(p.code);
-    return `<button class="mt-res" data-mt-rep="${esc(p.code)}"><img class="crest" src="${esc(p.crest)}" alt="" loading="lazy" width="24" height="24"><span class="who"><b>${esc(p.name)}</b><small>${esc(p.team)} · ${p.gp} GP</small></span><span class="mt-addb">${a && a.gp ? f1(a.fp / a.gp) + " FP" : ""}</span></button>`; }).join("")
+    return `<button class="mt-res" data-mt-rep="${esc(p.code)}"><img class="crest" src="${esc(p.crest)}" alt="" loading="lazy" width="24" height="24"><span class="who"><b>${esc(p.name)}</b><small>${esc(p.team)} · ${p.notYet ? "no games yet" : p.gp + " GP"}</small></span><span class="mt-addb">${a && a.gp ? f1(a.fp / a.gp) + " FP" : ""}</span></button>`; }).join("")
     : '<p class="sub">No players match.</p>';
 }
 function mtReplace(code) {
@@ -1511,7 +1539,7 @@ async function openSquadEditor() {
         <input class="input" id="mt-search" type="search" placeholder="Search player or team" autocomplete="off">
         <div id="mt-results"><div class="loading">Loading players…</div></div></div>
       <div class="mt-savebar"><span class="sub" id="mt-msg"></span><button class="btn primary" data-mt-save>Next: arrange team</button></div></div>`, openSquadEditor);
-  try { MT.pl = await loadPlayers("PerGame"); } catch (err) { MT.pl = []; }
+  try { MT.pl = await loadPool(); } catch (err) { MT.pl = []; }
   paintChosen(); paintResults();
 }
 function paintChosen() {
@@ -1528,7 +1556,7 @@ function paintResults() {
   const list = MT.pl.filter(p => !q || p.name.toLowerCase().includes(q) || p.raw.toLowerCase().includes(q) || p.team.toLowerCase().includes(q) || (p.teamName || "").toLowerCase().includes(q))
     .sort((a, b) => score(b) - score(a)).slice(0, 40);
   $("#mt-results").innerHTML = list.length ? list.map(p => { const on = chosen.has(p.code), a = S.agg?.get(p.code);
-    return `<button class="mt-res ${on ? "taken" : ""}" data-mt-add="${esc(p.code)}" aria-pressed="${on}"><img class="crest" src="${esc(p.crest)}" alt="" loading="lazy" width="24" height="24"><span class="who"><b>${esc(p.name)}</b><small>${esc(p.team)}${a && a.gp ? ` · ${f1(a.fp / a.gp)} FP/game` : ""}</small></span><span class="mt-addb">${on ? "✓ Added" : "+ Add"}</span></button>`; }).join("")
+    return `<button class="mt-res ${on ? "taken" : ""}" data-mt-add="${esc(p.code)}" aria-pressed="${on}"><img class="crest" src="${esc(p.crest)}" alt="" loading="lazy" width="24" height="24"><span class="who"><b>${esc(p.name)}</b><small>${esc(p.team)}${p.notYet ? " · no games yet" : a && a.gp ? ` · ${f1(a.fp / a.gp)} FP/game` : ""}</small></span><span class="mt-addb">${on ? "✓ Added" : "+ Add"}</span></button>`; }).join("")
     : '<p class="sub">No players match.</p>';
 }
 function mtToggle(code) {
