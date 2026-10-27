@@ -554,8 +554,13 @@ function paintStale() {
   // Saved data is shown silently when loading fails; background retries continue via tick().
   const el = $("#stale"); if (el) { el.hidden = true; el.innerHTML = ""; }
 }
+// EuroLeague's per-game list leaves out players with only a few games, so the per-game view is
+// worked out here from the complete season-totals list: every player who has appeared is included.
+const PER_GAME_KEYS = ["min", "pts", "reb", "oreb", "dreb", "ast", "stl", "blk", "tov", "pf", "fd", "fgm", "fga", "tpm", "tpa", "ftm", "fta", "pir"];
+function perGame(p) { const o = { ...p }, g = p.gp || 1; for (const k of PER_GAME_KEYS) o[k] = p[k] / g; return o; }
 async function loadPlayers(mode) {
   if (S.players[mode]) return S.players[mode];
+  if (mode === "PerGame") { const acc = await loadPlayers("Accumulated"); S.players.PerGame = acc.map(perGame); return S.players.PerGame; }
   const d = await fresh(`p:${S.season}:${mode}`, () => getJSON("api", `/v3/competitions/${COMP}/statistics/players/traditional?seasonMode=Single&statisticMode=${mode}&seasonCode=${COMP}${S.season}&limit=2000`),
     S.season < NOW_SEASON ? Infinity : DATA_MAX_AGE, true);
   S.players[mode] = (d.players || []).map(flatPlayer);
