@@ -1318,7 +1318,7 @@ async function mtLine(code, team, rk, boxFor) {
   if (st === "upcoming" || (st === "starting" && !S.live.get(g.code)?.Live)) return { kind: "pending", g, team };
   let b; try { b = await boxFor(g); } catch (e) { return { kind: "error", g, team }; }
   const f = find(b), tc = f ? teamOf(g, b, f.ti) : team;
-  if (!f || !f.l.sec) return { kind: g.played ? "dnp" : "notyet", g, team: tc, fp: 0 };
+  if (!f || !f.l.sec) return { kind: g.played ? "dnp" : "notyet", g, team: tc, l: f?.l, fp: 0 };
   const res = g.played ? resultFor(g, tc) : null;
   return { kind: g.played ? "final" : "live", g, team: tc, l: f.l, fp: fp(f.l, res) };
 }
@@ -1369,7 +1369,7 @@ function mtStatusShort(x) {
   const L = S.live.get(g.code); let a = n(L?.ScoreA), b = n(L?.ScoreB);
   if (String(L?.CodeTeamA || "").trim() === g.away.code) [a, b] = [b, a];
   const my = home ? a : b, th = home ? b : a, clock = L ? liveLabel(L).replace(/^Live( · )?/, "") : "Live";
-  return `<span class="mt-clock">${clock}</span> · ${my}–${th} ${vs}${x.kind === "notyet" ? " · on bench" : x.l?.on ? " · on court" : ""}`;
+  return `<span class="mt-clock">${clock}</span> · ${my}–${th} ${vs}${x.l?.on ? " · on court" : ""}`;
 }
 // Short (last) name for cards: "DE COLO, NANDO" -> "De Colo"
 function mtShort(code, d) {
@@ -1400,7 +1400,7 @@ function mtTiny(x) {
     return `<span class="${my > th ? "pos" : "negv"}">${my > th ? "W" : "L"}</span> ${my}–${th}`;
   }
   const L = S.live.get(g.code), clock = L ? liveLabel(L).replace(/^Live( · )?/, "") : "Live";
-  return `<span class="mt-clock">${clock}</span>${x.kind === "notyet" ? " · bench" : ""}`;
+  return `<span class="mt-clock">${clock}</span>`;
 }
 const COURT_SVG = `<svg class="mt-lines" viewBox="0 0 300 250" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2">
   <rect x="6" y="6" width="288" height="238" rx="4"/><rect x="105" y="6" width="90" height="105"/><path d="M105 111 a45 45 0 0 0 90 0"/>
@@ -1414,7 +1414,7 @@ function paintBoard(loading) {
   for (const slot of POS) { const c = e.pos[slot], x = c && MT.lines[c]; if (!x) continue;
     if (x.fp != null) total += x.fp * mtMult(slot, e, c);
     if (slot[0] === "r" && x.fp != null) resPts += x.fp;
-    if (x.kind === "live" && x.l?.on) onCourt++;
+    if ((x.kind === "live" || x.kind === "notyet") && x.l?.on) onCourt++;
     if (x.kind === "live" || x.kind === "notyet") live++; else if (x.kind === "pending") toPlay++; else if (x.kind === "final" || x.kind === "dnp") done++; }
   const card = (slot, extra = "") => {
     const code = e.pos[slot], m = mtMult(slot, e, code), sel = MT.sel === slot ? "selected" : "", isCap = code && code === e.cap;
@@ -1423,7 +1423,7 @@ function paintBoard(loading) {
     const x = MT.lines[code], has = x && x.fp != null && ["final", "live", "dnp", "notyet"].includes(x.kind), val = has ? x.fp * m : null;
     const dot = x?.kind === "live" ? `<i class="mt-dot" title="Playing now"></i>` : "";
     const arm = isCap ? `<span class="mt-arm">${e.tc ? "C×3" : "C"}</span>` : "";
-    const onc = x?.kind === "live" && x.l?.on;
+    const onc = (x?.kind === "live" || x?.kind === "notyet") && x.l?.on;
     const dd = x?.l && (x.kind === "live" || x.kind === "final") ? ddInfo(x.l, x.kind === "live") : null;
     return `<div class="mt-card ${extra} ${sel} ${x?.kind === "live" ? "is-live" : ""} ${onc ? "oncourt" : ""}" data-slot="${slot}" data-code="${esc(code)}" title="${esc(mtName(code, d))}">${arm}${onc ? '<span class="mt-onc">ON</span>' : ""}
       <div class="mt-cn">${dot}<span>${esc(mtShort(code, d))}</span></div>
