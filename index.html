@@ -240,13 +240,68 @@ tr.oncourt td:first-child{box-shadow:inset 3px 0 0 var(--live)}
 .teamh .sub{font-size:12px}
 .mvp-n{display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mvp .sub{font-size:13px}
+.mt-title{font:700 20px/1.2 var(--display);margin:0 0 10px}
+.mt-total{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 18px;margin-bottom:14px;background:linear-gradient(120deg,var(--gold-soft),var(--surface) 70%)}
+.mt-total .lab{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.mt-total .big{font-weight:800;font-size:40px;letter-spacing:-.02em;line-height:1.1;color:var(--gold)}
+.mt-tbtns{display:flex;gap:8px;flex-wrap:wrap}
+.mt-wcs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mt-wcbar{margin-bottom:14px}
+.mt-wc{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface);min-width:0}
+.mt-wc b{font-size:14px}
+.mt-wc span{font-size:12px;color:var(--muted)}
+.mt-wc i{font-style:normal;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--sea);margin-top:4px}
+.mt-wc.on{background:var(--gold-soft);border-color:var(--gold-bright)}
+.mt-wc.on i{color:var(--gold)}
+.mt-ask{margin-bottom:14px;border-color:var(--gold-bright)}
+.mt-sec{margin-bottom:14px}
+.mt-sech{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 0 8px}
+.mt-sech h3{margin:0;font-size:15px;font-weight:800}
+.mt-list{overflow:hidden}
+.mt-row{display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.mt-row:last-child{border-bottom:0}
+.mt-row:hover{background:var(--surface-2)}
+.mt-row.is-live{box-shadow:inset 3px 0 0 var(--live)}
+.mt-row.empty-slot{cursor:default}
+.mt-role{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--surface-2);color:var(--muted);font-weight:800;font-size:12px}
+.mt-role.cap{background:var(--gold-bright);color:#1a1204}
+.mt-who{min-width:0}
+.mt-who b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt-who .sub{font-size:12px;line-height:1.35}
+.mt-live{color:var(--live);font-weight:800;white-space:nowrap}
+.mt-on{color:var(--win);font-weight:700}
+.mt-team{font-weight:700}
+.mt-pts{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}
+.mt-pts>span{font-weight:800;font-size:18px;color:var(--gold)}
+.mt-pts>span.muted{color:var(--muted)}
+.mt-pts small{font-size:11px;color:var(--muted);white-space:nowrap}
+.mt-ed{display:flex;flex-direction:column;gap:14px}
+.mt-slotgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(150px,100%),1fr));gap:8px;margin-bottom:6px}
+.mt-slot{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface);cursor:pointer;min-width:0}
+.mt-slot.empty{border-style:dashed;color:var(--muted)}
+.mt-slot.active{border-color:var(--sea);box-shadow:0 0 0 2px var(--sea-soft)}
+.mt-sl-txt{flex:1;min-width:0;line-height:1.2}
+.mt-sl-txt small{display:block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mt-sl-txt b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt-sl-txt .sub{font-size:11px}
+.mt-slot{padding:7px 8px;gap:6px}
+.mt-cap,.mt-x{flex:none;width:28px;height:28px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface-2);font-weight:800;font-size:13px;color:var(--muted)}
+.mt-cap.on{background:var(--gold-bright);border-color:var(--gold-bright);color:#1a1204}
+.mt-pick .input{width:100%;margin-bottom:10px}
+#mt-results{display:flex;flex-direction:column;gap:2px;max-height:38vh;overflow-y:auto}
+.mt-res{display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px;border:0;border-radius:10px;background:none;text-align:left}
+.mt-res:hover{background:var(--surface-2)}
+.mt-res .who b{font-size:14px}
+.mt-res.taken{opacity:.6}
+.mt-savebar{position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0 calc(6px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line)}
+@media (max-width:420px){.mt-wcs{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.mt-wc{padding:8px 10px}.mt-total .big{font-size:34px}}
 footer{color:var(--muted);font-size:12px;padding-block:24px 32px;border-top:1px solid var(--line)}
 
 /* phone: tabs become a bottom bar */
 @media (max-width:760px){
   .top .wrap{flex-wrap:wrap}
   nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;border-radius:0;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));justify-content:space-around;box-shadow:0 -8px 24px -12px rgba(0,0,0,.2)}
-  nav.tabs button{flex-direction:column;gap:3px;font-size:11px;padding:6px 8px;color:var(--muted);flex:1}
+  nav.tabs button{flex-direction:column;gap:3px;font-size:11px;padding:6px 2px;color:var(--muted);flex:1;min-width:0;white-space:nowrap}
   nav.tabs button[aria-selected=true]{background:var(--sea-soft);color:var(--sea)}
   nav.tabs .dot{box-shadow:0 0 0 2px var(--surface);right:calc(50% - 18px)}
   body{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
@@ -289,6 +344,7 @@ footer{color:var(--muted);font-size:12px;padding-block:24px 32px;border-top:1px 
       <button role="tab" data-tab="games" aria-selected="true"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.8 5.8c3 3 3 9.4 0 12.4M18.2 5.8c-3 3-3 9.4 0 12.4"/></svg>Games<span class="dot" id="livedot" hidden></span></button>
       <button role="tab" data-tab="leaders" aria-selected="false"><svg class="ic" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5a3 3 0 0 0 3.5 4M16 6h3.5a3 3 0 0 1-3.5 4M12 13v4M8 20h8"/></svg>Leaders</button>
       <button role="tab" data-tab="players" aria-selected="false"><svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.6A5 5 0 0 1 21.5 20"/></svg>Players</button>
+      <button role="tab" data-tab="myteam" aria-selected="false"><svg class="ic" viewBox="0 0 24 24"><path d="M8.5 3.5 4 5.5 2.5 10l3 1.2V20h13v-8.8l3-1.2L20 5.5l-4.5-2a3.5 3.5 0 0 1-7 0z"/></svg>My Team</button>
       <button role="tab" data-tab="standings" aria-selected="false"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Standings</button>
     </nav>
     <div class="hdr-actions">
@@ -447,11 +503,12 @@ const boxMem = new Map(), schedMem = new Map(), teamMem = new Map();
 async function loadBox(season, code, final) {
   const key = `${COMP}${season}:${code}`;
   if (final) {
-    if (boxMem.has(key)) return boxMem.get(key);
+    const m = boxMem.get(key); if (m && m.fin) return m;
     const c = store.get("b:" + key);
-    if (c) { const b = unpackBox(c); boxMem.set(key, b); return b; }
+    if (c) { const b = unpackBox(c); b.fin = true; boxMem.set(key, b); return b; }
   }
   const b = normBox(await getJSON("live", `/api/Boxscore?gamecode=${code}&seasoncode=${COMP}${season}`));
+  b.fin = !!final && !b.live;
   boxMem.set(key, b);
   if (final && !b.live && b.teams.length) store.set("b:" + key, packBox(b));
   return b;
@@ -610,7 +667,7 @@ async function loadSeason() {
   $("#main").innerHTML = `<div class="loading">Loading the ${seasonLabel(S.season)} season…</div>`;
   S.finalsAt = store.get("finat:" + S.season) || 0; S.lastSchedTry = 0;
   try { await refreshSchedule(); } catch (e) { return showError(e); }
-  S.round = defaultRound();
+  S.round = defaultRound(); MT.round = null;
   await pollLive();
   render();
   ensureFP();
@@ -658,6 +715,7 @@ async function tick() {
     S.fpPromise = null; S.agg = null; S.standings = null; S.players = { Accumulated: null, PerGame: null }; ensureFP();
   }
   if (S.tab === "games") renderGames();
+  if (S.tab === "myteam" && !$(".sheet")) renderMyTeam();   // your players' live games only
   refreshOpenGame();                                  // box score only if you have a live game open
 }
 const roundKey = (g) => g.phase + "|" + g.round;
@@ -696,7 +754,7 @@ function gameState(g) {
 /* ================= render shell ================= */
 function render() {
   document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === S.tab)));
-  ({ games: renderGames, leaders: renderLeaders, players: renderPlayers, standings: renderStandings })[S.tab]();
+  ({ games: renderGames, leaders: renderLeaders, players: renderPlayers, myteam: () => renderMyTeam({ fresh: true }), standings: renderStandings })[S.tab]();
 }
 function showError(e) {
   const fileMode = location.protocol === "file:";
@@ -1041,6 +1099,237 @@ async function renderHistory(code, opp, back) {
     ${logTable(h.map(r => ({ g: r.g, l: r.line, res: r.res, tc: r.team, label: `${seasonLabel(r.y)} · ${ydf.format(new Date(r.g.date))}` })), true)}
     <p class="note">Covers ${seasonLabel(S.season - back)} to ${seasonLabel(S.season)}, matched by the club the player was with each season.</p></div>${more}`;
 }
+
+/* ================= My Team (saved on this phone/browser only) ================= */
+// Lineup per round: 5 starters (100%, captain 200% / 300% with Triple Captain), 6th man (100%),
+// 4 bench (50% / 100% with Bench Boost), 3 reserves (0%). DNP = 0. Multipliers apply to negative FP too.
+const SLOT_IDS = ["s0", "s1", "s2", "s3", "s4", "x0", "b0", "b1", "b2", "b3", "r0", "r1", "r2"];
+const MT = { round: null, draft: null, active: "s0", q: "", pl: null, tok: 0 };
+const mtKey = () => "myteam:" + S.season;
+const mtData = () => { const d = store.get(mtKey()) || {}; d.rounds = d.rounds || {}; d.meta = d.meta || {}; return d; };
+const mtSave = (d) => store.set(mtKey(), d);
+const emptyLU = () => ({ s: [null, null, null, null, null], c: null, x: null, b: [null, null, null, null], r: [null, null, null] });
+const luGet = (lu, id) => id[0] === "x" ? lu.x : lu[id[0]][+id.slice(1)];
+const luSet = (lu, id, v) => { if (id[0] === "x") lu.x = v; else lu[id[0]][+id.slice(1)] = v; };
+const luCodes = (lu) => SLOT_IDS.map(id => luGet(lu, id)).filter(Boolean);
+const mtRounds = () => [...new Set(S.games.map(roundKey))];
+const clone = (o) => JSON.parse(JSON.stringify(o));
+function mtEntry(d, rk) {
+  if (d.rounds[rk]) return { e: d.rounds[rk], from: null };
+  const rs = mtRounds(), i = rs.indexOf(rk);
+  for (let j = i - 1; j >= 0; j--) if (d.rounds[rs[j]]) return { e: { lu: clone(d.rounds[rs[j]].lu), bb: false, tc: false, asked: false }, from: rs[j] };
+  return null;
+}
+function mtMult(id, lu, e) {
+  if (id[0] === "s") return lu.c && lu.c === luGet(lu, id) ? (e.tc ? 3 : 2) : 1;
+  if (id === "x0") return 1;
+  if (id[0] === "b") return e.bb ? 1 : 0.5;
+  return 0;
+}
+const SECTIONS = [["s", "Starting five", ["s0", "s1", "s2", "s3", "s4"]], ["x", "6th man", ["x0"]], ["b", "Bench", ["b0", "b1", "b2", "b3"]], ["r", "Reserve", ["r0", "r1", "r2"]]];
+const roleLabel = (id, lu) => id[0] === "s" ? (lu.c && lu.c === luGet(lu, id) ? "C" : "S") : id[0] === "x" ? "6" : id[0] === "b" ? "B" : "R";
+function mtTeamOf(code, d) {
+  const p = (S.players.PerGame || S.players.Accumulated)?.find(x => x.code === code);
+  return p?.team || d.meta[code]?.t || S.agg?.get(code)?.team || "";
+}
+const mtName = (code, d) => d.meta[code]?.n || (S.players.PerGame || [])?.find(x => x.code === code)?.name || S.agg?.get(code)?.name || code;
+
+// One player's line for a round: which game, its state, the box score line and his Fantasy Points.
+async function mtLine(code, team, rk, boxFor) {
+  const games = S.games.filter(g => roundKey(g) === rk);
+  let g = games.find(x => x.home.code === team || x.away.code === team);
+  const find = (b) => { for (let ti = 0; ti < b.teams.length; ti++) for (const l of b.teams[ti].players) if (l.code === code) return { l, ti }; return null; };
+  if (!g) {   // traded player: look through this round's finished games
+    for (const x of games.filter(x => x.played)) { try { const b = await boxFor(x); const f = find(b); if (f) { g = x; break; } } catch (e) {} }
+    if (!g) return { kind: "none" };
+  }
+  const st = gameState(g);
+  if (st === "upcoming" || (st === "starting" && !S.live.get(g.code)?.Live)) return { kind: "pending", g, team };
+  let b; try { b = await boxFor(g); } catch (e) { return { kind: "error", g, team }; }
+  const f = find(b);
+  const tc = f ? teamOf(g, b, f.ti) : team;
+  if (!f || !f.l.sec) return { kind: g.played ? "dnp" : "notyet", g, team: tc, live: !g.played, fp: 0 };
+  const res = g.played ? resultFor(g, tc) : null;
+  return { kind: g.played ? "final" : "live", g, team: tc, l: f.l, fp: fp(f.l, res), res };
+}
+function mtStatus(x, d) {
+  if (!x || x.kind === "none") return "No game this round";
+  const g = x.g, home = g.home.code === x.team, opp = home ? g.away : g.home, vs = `${home ? "vs" : "@"} ${esc(opp.code)}`;
+  if (x.kind === "pending") return `${vs} · ${dtf.format(new Date(g.date))}, ${tf.format(new Date(g.date))}`;
+  if (x.kind === "error") return `${vs} · box score not available yet`;
+  if (x.kind === "final" || x.kind === "dnp") {
+    const my = home ? g.home.score : g.away.score, th = home ? g.away.score : g.home.score;
+    return `<span class="${my > th ? "pos" : "negv"}" style="font-weight:800">${my > th ? "W" : "L"}</span> ${my}–${th} ${vs}${x.kind === "dnp" ? " · <b>DNP</b>" : ""}`;
+  }
+  const L = S.live.get(g.code); let a = n(L?.ScoreA), b = n(L?.ScoreB);
+  if (String(L?.CodeTeamA || "").trim() === g.away.code) [a, b] = [b, a];
+  const my = home ? a : b, th = home ? b : a;
+  const clock = L ? liveLabel(L).replace(/^Live( · )?/, "") : "";
+  return `<span class="mt-live">● ${clock || "Live"}</span> ${my}–${th} ${vs}${x.kind === "notyet" ? " · not on court yet" : x.l?.on ? ' · <span class="mt-on">on court</span>' : ""}`;
+}
+
+async function renderMyTeam(opts = {}) {
+  if (S.tab !== "myteam") return;
+  const tok = ++MT.tok, rs = mtRounds();
+  if (!MT.round || !rs.includes(MT.round)) MT.round = defaultRound();
+  const rk = MT.round, i = rs.indexOf(rk), d = mtData(), me = mtEntry(d, rk);
+  const nav = `<div class="sec-h"><div class="roundnav">
+      <button class="btn" data-mtrnav="-1" ${i <= 0 ? "disabled" : ""} aria-label="Previous round">‹</button>
+      <strong>${esc(roundLabel(rk))}</strong>
+      <button class="btn" data-mtrnav="1" ${i >= rs.length - 1 ? "disabled" : ""} aria-label="Next round">›</button></div>
+      <span class="sub">Saved on this device only</span></div>`;
+  if (!me) {
+    $("#main").innerHTML = `<h2 class="mt-title">My Team</h2>${nav}<div class="empty"><p style="margin:0 0 14px"><b>No team yet.</b> Add the 13 players from your fantasy team: 5 starters with a captain, a 6th man, 4 bench and 3 reserves.</p><button class="btn primary" data-mt-edit>Pick your team</button></div>${mtBackupLink()}`;
+    return;
+  }
+  const roundGames = S.games.filter(g => roundKey(g) === rk);
+  const started = roundGames.some(g => g.played || ["live", "ended"].includes(gameState(g)));
+  const finished = roundGames.length && roundGames.every(g => g.played);
+  if (me.from && started) { d.rounds[rk] = me.e; mtSave(d); me.from = null; }   // lock in the lineup once the round starts
+  const e = me.e, lu = e.lu;
+  if (!$("#mt-total") || opts.fresh) $("#main").innerHTML = `<h2 class="mt-title">My Team</h2>${nav}<div class="loading">Loading your players…</div>`;
+  // box scores: finished games from the saved copy, live games fetched fresh (once per refresh)
+  const boxes = new Map();
+  const boxFor = (g) => { if (!boxes.has(g.code)) boxes.set(g.code, loadBox(S.season, g.code, g.played)); return boxes.get(g.code); };
+  const ids = SLOT_IDS.filter(id => luGet(lu, id));
+  const lines = await Promise.all(ids.map(id => mtLine(luGet(lu, id), mtTeamOf(luGet(lu, id), d), rk, boxFor).catch(() => ({ kind: "error" }))));
+  if (tok !== MT.tok || S.tab !== "myteam") return;
+  const byId = Object.fromEntries(ids.map((id, k) => [id, lines[k]]));
+  let total = 0, live = 0, toPlay = 0, done = 0;
+  for (const id of ids) { const x = byId[id], m = mtMult(id, lu, e); if (x.fp != null) total += x.fp * m; if (x.kind === "live" || x.kind === "notyet") live++; else if (x.kind === "pending") toPlay++; else if (x.kind === "final" || x.kind === "dnp") done++; }
+  const row = (id) => {
+    const code = luGet(lu, id), m = mtMult(id, lu, e), role = roleLabel(id, lu);
+    if (!code) return `<div class="mt-row empty-slot"><span class="mt-role">${role}</span><div class="mt-who"><span class="sub">Empty slot</span></div><div></div></div>`;
+    const x = byId[id], has = x.fp != null && (x.kind === "final" || x.kind === "live" || x.kind === "dnp" || x.kind === "notyet");
+    const val = has ? x.fp * m : null;
+    return `<div class="mt-row ${x.kind === "live" ? "is-live" : ""}" data-player="${esc(code)}">
+      <span class="mt-role ${role === "C" ? "cap" : ""}">${role}</span>
+      <div class="mt-who"><b>${esc(mtName(code, d))}</b><div class="sub"><span class="mt-team">${esc(x.team || mtTeamOf(code, d))}</span> · ${mtStatus(x, d)}</div></div>
+      <div class="mt-pts"><span class="${val == null ? "muted" : val < 0 ? "negv" : ""}">${val == null ? "–" : f1(val)}</span><small>${has ? `${f1(x.fp)} × ${m}` : `× ${m}`}</small></div></div>`;
+  };
+  const secMult = (k) => k === "s" ? (e.tc ? "×1 · captain ×3" : "×1 · captain ×2") : k === "x" ? "×1" : k === "b" ? (e.bb ? "×1 · Bench Boost" : "×0.5") : "×0";
+  const wc = (k, label, desc) => `<button class="mt-wc ${e[k] ? "on" : ""}" data-mt-wc="${k}" aria-pressed="${!!e[k]}"><b>${label}</b><span>${desc}</span><i>${e[k] ? "Used" : "Use wildcard"}</i></button>`;
+  const ask = !e.asked && !finished ? `<div class="card box mt-ask"><h3>Using a wildcard in ${esc(roundLabel(rk))}?</h3><p class="sub" style="margin:-4px 0 12px">Tap the ones you're playing this round, then confirm. You can change this any time.</p>
+      <div class="mt-wcs">${wc("bb", "Bench Boost", "Bench earns 100% instead of 50%")}${wc("tc", "Triple Captain", "Captain earns 300% instead of 200%")}</div>
+      <button class="btn primary" data-mt-asked style="margin-top:12px">Confirm</button></div>`
+    : `<div class="mt-wcs mt-wcbar">${wc("bb", "Bench Boost", "Bench ×1")}${wc("tc", "Triple Captain", "Captain ×3")}</div>`;
+  $("#main").innerHTML = `<h2 class="mt-title">My Team</h2>${nav}
+    <div class="mt-total card" id="mt-total"><div><div class="lab">Fantasy Points · ${esc(roundLabel(rk))}</div><div class="big">${f1(total)}</div>
+      <div class="sub">${live ? `<span class="pill live">${live} live</span> ` : ""}${done} finished · ${toPlay} to play${!lu.c ? ' · <b class="negv">no captain set</b>' : ""}</div></div>
+      <div class="mt-tbtns">${live ? `<button class="btn" data-mt-refresh>↻ Refresh</button>` : ""}<button class="btn primary" data-mt-edit>Edit team</button></div></div>
+    ${me.from ? `<p class="note" style="margin:0 0 12px">Same lineup as ${esc(roundLabel(me.from))}. Tap Edit team to change it for this round only.</p>` : ""}
+    ${ask}
+    ${SECTIONS.map(([k, title, sids]) => `<section class="mt-sec"><div class="mt-sech"><h3>${title}</h3><span class="sub">${secMult(k)}</span></div><div class="card mt-list">${sids.map(row).join("")}</div></section>`).join("")}
+    <p class="note">${live ? "Live points update every 20 seconds while this tab is open; the win/loss bonus is added at the final buzzer. " : ""}Points = player's Fantasy Points × slot multiplier. DNP = 0.</p>
+    ${mtBackupLink()}`;
+}
+const mtBackupLink = () => `<p class="note" style="margin-top:16px"><button class="btn" data-mt-backup>Back up or move team</button></p>`;
+function mtPersistEntry(mutator) {
+  const d = mtData(), me = mtEntry(d, MT.round); if (!me) return;
+  const e = me.e; mutator(e); d.rounds[MT.round] = e; mtSave(d); renderMyTeam();
+}
+
+/* ----- editor ----- */
+async function openTeamEditor() {
+  const d = mtData(), me = mtEntry(d, MT.round);
+  MT.draft = me ? clone(me.e.lu) : emptyLU(); MT.q = "";
+  MT.active = SLOT_IDS.find(id => !luGet(MT.draft, id)) || "s0";
+  openGameCode = null;
+  sheet(`My Team · ${roundLabel(MT.round)}`, `<div class="mt-ed">
+      <p class="sub" style="margin:0">Pick players from the list; they fill the slots below in order. Tap a slot to change it, and mark your captain with <b>C</b>. Changes apply to ${esc(roundLabel(MT.round))} and later rounds you haven't changed.</p>
+      <div class="card box mt-pick" id="mt-pick"><h3>Choose for <span id="mt-for"></span></h3>
+        <input class="input" id="mt-search" type="search" placeholder="Search player or team" autocomplete="off">
+        <div id="mt-results"><div class="loading">Loading players…</div></div></div>
+      <div id="mt-slots"></div>
+      <div class="mt-savebar"><span class="sub" id="mt-msg"></span><button class="btn primary" data-mt-save>Save team</button></div></div>`, openTeamEditor);
+  try { MT.pl = await loadPlayers("PerGame"); } catch (err) { MT.pl = []; }
+  paintSlots(); paintResults();
+}
+function slotLabel(id) { return { s: "Starter", x: "6th man", b: "Bench", r: "Reserve" }[id[0]] + (id[0] === "x" ? "" : " " + (+id.slice(1) + 1)); }
+function paintSlots() {
+  const lu = MT.draft, d = mtData(); if (!$("#mt-slots")) return;
+  $("#mt-slots").innerHTML = SECTIONS.map(([k, title, sids]) => `<div class="mt-sech"><h3>${title}</h3><span class="sub">${k === "s" ? "100% · captain 200%" : k === "x" ? "100%" : k === "b" ? "50%" : "0%"}</span></div>
+    <div class="mt-slotgrid">${sids.map(id => { const code = luGet(lu, id), cap = code && lu.c === code;
+      return `<div class="mt-slot ${MT.active === id ? "active" : ""} ${code ? "" : "empty"}" data-mt-slot="${id}" role="button" tabindex="0">
+        <div class="mt-sl-txt"><small>${slotLabel(id)}</small><b>${code ? esc(mtName(code, d)) : "Empty"}</b>${code ? `<span class="sub">${esc(mtTeamOf(code, d))}</span>` : ""}</div>
+        ${code && k === "s" ? `<button class="mt-cap ${cap ? "on" : ""}" data-mt-cap="${id}" aria-pressed="${!!cap}" title="Captain">C</button>` : ""}
+        ${code ? `<button class="mt-x" data-mt-remove="${id}" aria-label="Remove">✕</button>` : ""}</div>`; }).join("")}</div>`).join("");
+  $("#mt-for").textContent = slotLabel(MT.active);
+  const n13 = luCodes(lu).length;
+  $("#mt-msg").textContent = `${n13} of 13 picked${lu.s.some(Boolean) && !lu.c ? " · no captain yet" : ""}`;
+}
+function paintResults() {
+  if (!$("#mt-results") || !MT.pl) return;
+  const q = MT.q.trim().toLowerCase(), inLU = new Map(SLOT_IDS.map(id => [luGet(MT.draft, id), id]).filter(x => x[0]));
+  const score = (p) => { const a = S.agg?.get(p.code); return a && a.gp ? a.fp / a.gp : p.pir; };
+  const list = MT.pl.filter(p => !q || p.name.toLowerCase().includes(q) || p.raw.toLowerCase().includes(q) || p.team.toLowerCase().includes(q) || (p.teamName || "").toLowerCase().includes(q))
+    .sort((a, b) => score(b) - score(a)).slice(0, 40);
+  $("#mt-results").innerHTML = list.length ? list.map(p => { const at = inLU.get(p.code), a = S.agg?.get(p.code);
+    return `<button class="mt-res ${at ? "taken" : ""}" data-mt-pick="${esc(p.code)}"><img class="crest" src="${esc(p.crest)}" alt="" loading="lazy" width="24" height="24"><span class="who"><b>${esc(p.name)}</b><small>${esc(p.team)}${at ? " · in " + slotLabel(at) : ""}</small></span><span class="fp">${a && a.gp ? f1(a.fp / a.gp) : "–"}</span></button>`; }).join("")
+    : '<p class="sub">No players match.</p>';
+}
+function mtPick(code) {
+  const lu = MT.draft, p = MT.pl.find(x => x.code === code); if (!p) return;
+  const prev = SLOT_IDS.find(id => luGet(lu, id) === code);
+  if (prev === MT.active) return;
+  const replaced = luGet(lu, MT.active);
+  if (prev) luSet(lu, prev, replaced || null);          // swap if the player was already in another slot
+  luSet(lu, MT.active, code);
+  if (lu.c && !lu.s.includes(lu.c)) lu.c = null;           // captain must stay a starter
+  const d = mtData(); d.meta[code] = { n: p.name, t: p.team }; mtSave(d);
+  MT.active = SLOT_IDS.find(id => !luGet(lu, id)) || MT.active;
+  MT.q = ""; if ($("#mt-search")) $("#mt-search").value = "";
+  paintSlots(); paintResults();
+}
+function mtSaveTeam() {
+  const d = mtData(), me = mtEntry(d, MT.round), lu = MT.draft;
+  for (const code of luCodes(lu)) { const p = MT.pl?.find(x => x.code === code); if (p) d.meta[code] = { n: p.name, t: p.team }; }
+  d.rounds[MT.round] = { lu, bb: me?.e.bb || false, tc: me?.e.tc || false, asked: me?.e.asked || false };
+  mtSave(d); closeSheet(); renderMyTeam({ fresh: true });
+}
+
+/* ----- backup / move to another phone ----- */
+function openTeamBackup() {
+  const d = mtData(); openGameCode = null;
+  let code = ""; try { code = btoa(unescape(encodeURIComponent(JSON.stringify({ v: 1, season: S.season, d })))); } catch (e) {}
+  sheet("Back up My Team", `<section class="card box"><h3>Your team code</h3><p class="sub" style="margin-top:-4px">My Team is saved only on this phone or browser. Copy this code and keep it somewhere (or send it to yourself) to restore it later or on another phone.</p>
+      <textarea class="input" id="mt-code" readonly rows="4" style="width:100%;font:12px/1.4 ui-monospace,monospace">${esc(code)}</textarea>
+      <div class="row" style="margin-top:10px"><button class="btn primary" data-mt-copy>Copy code</button></div></section>
+    <section class="card box"><h3>Restore from a code</h3><p class="sub" style="margin-top:-4px">Paste a team code here. It replaces the team saved on this device for that season.</p>
+      <textarea class="input" id="mt-paste" rows="4" style="width:100%;font:12px/1.4 ui-monospace,monospace" placeholder="Paste team code"></textarea>
+      <div class="row" style="margin-top:10px"><button class="btn" data-mt-restore>Restore</button><span class="sub" id="mt-rmsg"></span></div></section>`, openTeamBackup);
+}
+function mtRestore() {
+  const raw = ($("#mt-paste")?.value || "").trim(), msg = $("#mt-rmsg");
+  try {
+    const o = JSON.parse(decodeURIComponent(escape(atob(raw))));
+    if (!o || !o.d || !o.d.rounds) throw new Error();
+    store.set("myteam:" + o.season, o.d);
+    if (o.season !== S.season) { msg.textContent = `Restored for ${seasonLabel(o.season)}.`; return; }
+    closeSheet(); renderMyTeam({ fresh: true });
+  } catch (e) { msg.textContent = "That code isn't valid. Copy the whole code and try again."; }
+}
+
+/* ----- events ----- */
+document.addEventListener("click", (ev) => {
+  const t = ev.target.closest("[data-mt-edit],[data-mt-remove],[data-mt-cap],[data-mt-slot],[data-mt-pick],[data-mt-save],[data-mt-wc],[data-mt-asked],[data-mtrnav],[data-mt-backup],[data-mt-copy],[data-mt-restore],[data-mt-refresh]");
+  if (!t) return;
+  if (t.hasAttribute("data-mt-edit")) return openTeamEditor();
+  if (t.dataset.mtRemove) { const lu = MT.draft, id = t.dataset.mtRemove; if (lu.c === luGet(lu, id)) lu.c = null; luSet(lu, id, null); MT.active = id; paintSlots(); paintResults(); return; }
+  if (t.dataset.mtCap) { const lu = MT.draft, c = luGet(lu, t.dataset.mtCap); lu.c = lu.c === c ? null : c; paintSlots(); return; }
+  if (t.dataset.mtSlot) { MT.active = t.dataset.mtSlot; paintSlots(); $("#mt-pick")?.scrollIntoView({ behavior: "smooth", block: "start" }); $("#mt-search")?.focus({ preventScroll: true }); return; }
+  if (t.dataset.mtPick) return mtPick(t.dataset.mtPick);
+  if (t.hasAttribute("data-mt-save")) return mtSaveTeam();
+  if (t.dataset.mtWc) { const k = t.dataset.mtWc; return mtPersistEntry(e => { e[k] = !e[k]; }); }
+  if (t.hasAttribute("data-mt-asked")) return mtPersistEntry(e => { e.asked = true; });
+  if (t.dataset.mtrnav) { const rs = mtRounds(); MT.round = rs[rs.indexOf(MT.round) + +t.dataset.mtrnav] || MT.round; return renderMyTeam({ fresh: true }); }
+  if (t.hasAttribute("data-mt-backup")) return openTeamBackup();
+  if (t.hasAttribute("data-mt-copy")) { const ta = $("#mt-code"); navigator.clipboard?.writeText(ta.value).then(() => { t.textContent = "Copied"; }, () => { ta.focus(); ta.select(); t.textContent = "Select and copy the text"; }) ?? (ta.focus(), ta.select()); return; }
+  if (t.hasAttribute("data-mt-restore")) return mtRestore();
+  if (t.hasAttribute("data-mt-refresh")) { t.disabled = true; t.textContent = "Refreshing…"; pollLive().then(() => renderMyTeam()); return; }
+});
+document.addEventListener("input", (ev) => { if (ev.target.id === "mt-search") { MT.q = ev.target.value; paintResults(); } });
+document.addEventListener("keydown", (ev) => { const s = ev.target.closest?.("[data-mt-slot]"); if (s && (ev.key === "Enter" || ev.key === " ") && ev.target === s) { ev.preventDefault(); s.click(); } });
 
 /* ================= standings ================= */
 const formHtml = (f) => `<span class="form">${(f || []).map(x => `<i class="${esc(x)}">${esc(x)}</i>`).join("")}</span>`;
