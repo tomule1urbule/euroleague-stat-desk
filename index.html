@@ -798,6 +798,7 @@ async function loadSeason() {
   $("#main").innerHTML = `<div class="loading">Loading the ${seasonLabel(S.season)} season…</div>`;
   S.finalsAt = store.get("finat:" + S.season) || 0; S.lastSchedTry = 0;
   try { await refreshSchedule(); } catch (e) { return showError(e); }
+  try { await checkOverdue(); } catch (e) {}
   S.round = defaultRound(); MT.round = null;
   await pollLive();
   render();
@@ -831,6 +832,23 @@ function applyLiveFinals() {
   if (changed) { store.set("fin:" + S.season, fin); S.finalsAt = Date.now(); store.set("finat:" + S.season, S.finalsAt); }
   return changed;
 }
+// Games that started a while ago but are still not marked finished in the schedule: check each one's own
+// score feed (or box score) once, and mark it finished if it is. Normally there are none, so this costs nothing.
+async function checkOverdue() {
+  const now = Date.now();
+  const due = S.games.filter(g => !g.played && now - new Date(g.date).getTime() > 2.5 * 3600e3 && now - new Date(g.date).getTime() < 21 * 864e5);
+  if (!due.length) return 0;
+  await pool(due, 3, async g => {
+    try { S.live.set(g.code, await getJSON("live", `/api/Header?gamecode=${g.code}&seasoncode=${COMP}${S.season}`)); } catch (e) {}
+    if (headerFinal(S.live.get(g.code))) return;
+    try {                                     // fallback: a finished box score with team totals
+      const b = await loadBox(S.season, g.code, false), A = b.teams[0]?.tot, B = b.teams[1]?.tot;
+      if (!b.live && A && B && (A.pts || B.pts) && A.pts !== B.pts)
+        S.live.set(g.code, { Live: false, ScoreA: A.pts, ScoreB: B.pts, Quarter: "", RemainingPartialTime: "00:00", CodeTeamA: b.teams[0].code });
+    } catch (e) {}
+  });
+  return applyLiveFinals();
+}
 async function tick() {
   const tok = S.token;
   // The full season schedule is only re-downloaded when the saved copy is over 3 hours old
@@ -838,7 +856,7 @@ async function tick() {
   const saved = store.get("last:g:" + S.season), age = saved ? Date.now() - saved.t : Infinity;
   if (S.season === NOW_SEASON && age > SCHEDULE_MAX_AGE && Date.now() - (S.lastSchedTry || 0) > 120e3) {
     S.lastSchedTry = Date.now();
-    try { await refreshSchedule(true); } catch (e) {}
+    try { await refreshSchedule(true); await checkOverdue(); } catch (e) {}
   }
   if (tok !== S.token) return;
   await pollLive();                                   // tiny score feed, live games only
