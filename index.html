@@ -500,20 +500,20 @@ async function fetchJSON(u) {
   try { const r = await fetch(u, { cache: "no-store" }); if (!r.ok) { const e = new Error("HTTP " + r.status); e.status = r.status; throw e; } return await r.json(); }
   finally { release(); }
 }
-async function withRetry(u) {
+async function withRetry(u, retries = RETRY_DELAYS.length) {
   let last;
-  for (let i = 0; i <= RETRY_DELAYS.length; i++) {
+  for (let i = 0; i <= retries; i++) {
     try { return await fetchJSON(u); }
-    catch (e) { last = e; if (e.status === 404 || i === RETRY_DELAYS.length) break; await sleep(RETRY_DELAYS[i] + Math.random() * 400); }
+    catch (e) { last = e; if (e.status === 404 || i === retries) break; await sleep(RETRY_DELAYS[i] + Math.random() * 400); }
   }
   throw last;
 }
-async function getJSON(host, path) {
+async function getJSON(host, path, retries) {
   if (!S.viaProxy) {
-    try { return await withRetry(HOSTS[host] + path); }
+    try { return await withRetry(HOSTS[host] + path, retries); }
     catch (e) { if (location.protocol === "file:" || /github\.io$/.test(location.hostname) || location.protocol === "https:") throw e; S.viaProxy = true; }
   }
-  return withRetry("/proxy/" + host + path);
+  return withRetry("/proxy/" + host + path, retries);
 }
 async function pool(items, size, fn) {
   let i = 0;
@@ -798,12 +798,18 @@ async function loadSeason() {
   $("#main").innerHTML = `<div class="loading">Loading the ${seasonLabel(S.season)} season…</div>`;
   S.finalsAt = store.get("finat:" + S.season) || 0; S.lastSchedTry = 0;
   try { await refreshSchedule(); } catch (e) { return showError(e); }
-  try { await checkOverdue(); } catch (e) {}
+  const tok = S.token;
   S.round = defaultRound(); MT.round = null;
-  await pollLive();
-  render();
-  ensureFP();
+  render();                                            // show the page straight away
   S.timer = setInterval(tick, LIVE_REFRESH_MS);
+  await pollLive();                                    // then live scores...
+  if (tok !== S.token) return;
+  let changed = false;
+  try { changed = (await checkOverdue()) > 0; } catch (e) {}   // ...and finished games the schedule hasn't caught up with
+  if (tok !== S.token) return;
+  if (changed) { S.fpPromise = null; S.agg = null; S.standings = null; S.players = { Accumulated: null, PerGame: null }; }
+  if (!$(".sheet") && !MT.drag && !MT.sel && !$("#mt-menu")) render();
+  ensureFP();
 }
 async function refreshSchedule(force) {
   S.games = await fresh(`g:${S.season}`, async () => {
@@ -871,7 +877,7 @@ const roundKey = (g) => g.phase + "|" + g.round;
 const roundLabel = (k) => { const g = S.games.find(x => roundKey(x) === k); if (!g) return ""; return g.phase === "RS" ? "Round " + g.round : (g.phaseName + " · " + (g.roundName || g.round)); };
 function defaultRound() {
   const rounds = [...new Set(S.games.map(roundKey))];
-  const firstOpen = S.games.find(g => !g.played);
+  const firstOpen = S.games.find(g => !g.played && Date.now() - new Date(g.date).getTime() < 12 * 3600e3);
   if (!firstOpen) return rounds[rounds.length - 1];
   const k = roundKey(firstOpen);
   const started = S.games.some(g => roundKey(g) === k && g.played);
@@ -886,7 +892,14 @@ const liveLabel = (L) => {
 const liveCandidates = () => S.games.filter(g => !g.played && Date.now() >= new Date(g.date).getTime() - 10 * 60e3 && Date.now() - new Date(g.date).getTime() < 6 * 3600e3);
 async function pollLive() {
   await Promise.all(liveCandidates().map(async g => {
-    try { S.live.set(g.code, await getJSON("live", `/api/Header?gamecode=${g.code}&seasoncode=${COMP}${S.season}`)); } catch (e) {}
+    try { S.live.set(g.code, await getJSON("live", `/api/Header?gamecode=${g.code}&seasoncode=${COMP}${S.season}`, 1)); return; } catch (e) {}
+    try {                                              // score feed failed: read the game state from the box score instead
+      const b = await loadBox(S.season, g.code, false), A = b.teams[0]?.tot, B = b.teams[1]?.tot;
+      if (A && B && (A.pts || B.pts)) {
+        const q = b.quarters[0]?.q.filter(x => x[1] != null && x[1] !== "").length || "";
+        S.live.set(g.code, { Live: !!b.live, ScoreA: A.pts, ScoreB: B.pts, Quarter: b.live ? String(q) : "", RemainingPartialTime: b.live ? "" : "00:00", CodeTeamA: b.teams[0].code });
+      }
+    } catch (e) {}
   }));
   $("#livedot").hidden = !S.games.some(g => gameState(g) === "live");
 }
