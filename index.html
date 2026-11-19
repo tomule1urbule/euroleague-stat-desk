@@ -482,6 +482,23 @@ const S = {
 try { const t = localStorage.getItem("sm-tab"); if (t) S.tab = t; } catch (e) {}
 
 /* ================= storage (finished games never change) ================= */
+/* Box scores live in IndexedDB (hundreds of MB available) instead of localStorage (~5 MB, shared with My Team). */
+const idb = (() => {
+  let dbp = null;
+  const open = () => dbp || (dbp = Promise.race([
+    new Promise(res => { try { const r = indexedDB.open("sm-cache", 1); r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = r.onblocked = () => res(null); } catch (e) { res(null); } }),
+    new Promise(res => setTimeout(() => res(null), 3000)),
+  ]));
+  const run = async (mode, fn) => { const db = await open(); if (!db) return null;
+    return new Promise(res => { try { const t = db.transaction("kv", mode), rq = fn(t.objectStore("kv")); t.oncomplete = () => res(rq ? rq.result ?? null : true); t.onerror = t.onabort = () => res(null); } catch (e) { res(null); } }); };
+  return { get: (k) => run("readonly", st => st.get(k)), set: (k, v) => run("readwrite", st => st.put(v, k)), count: () => run("readonly", st => st.count()) };
+})();
+async function migrateToIdb() {      // move saved box scores out of localStorage, freeing room for My Team and settings
+  try {
+    const keys = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith("sm1:b:")) keys.push(k); }
+    for (const k of keys) { const v = localStorage.getItem(k); if (v && await idb.set(k.slice(4), JSON.parse(v))) localStorage.removeItem(k); }
+  } catch (e) {}
+}
 const store = {
   get(k) { try { const v = localStorage.getItem("sm1:" + k); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem("sm1:" + k, JSON.stringify(v)); } catch (e) {} },
@@ -490,6 +507,7 @@ const store = {
 /* ================= network ================= */
 // At most 3 requests in flight at once, and up to 4 attempts per request with growing pauses,
 // so bursts (e.g. reading every box score) don't trip the API's rate limits.
+const REQUEST_TIMEOUT_MS = 10000;
 const MAX_INFLIGHT = 3, RETRY_DELAYS = [700, 1800, 4000];
 let inflight = 0; const waiters = [];
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -497,8 +515,10 @@ async function slot() { if (inflight < MAX_INFLIGHT) { inflight++; return; } awa
 function release() { inflight--; const w = waiters.shift(); if (w) w(); }
 async function fetchJSON(u) {
   await slot();
-  try { const r = await fetch(u, { cache: "no-store" }); if (!r.ok) { const e = new Error("HTTP " + r.status); e.status = r.status; throw e; } return await r.json(); }
-  finally { release(); }
+  const ac = new AbortController(), timer = setTimeout(() => ac.abort(), REQUEST_TIMEOUT_MS);
+  try { const r = await fetch(u, { cache: "no-store", signal: ac.signal }); if (!r.ok) { const e = new Error("HTTP " + r.status); e.status = r.status; throw e; } return await r.json(); }
+  catch (e) { if (e.name === "AbortError") { const t = new Error(`No answer within ${REQUEST_TIMEOUT_MS / 1000} s`); t.timeout = true; S.timeouts = (S.timeouts || 0) + 1; throw t; } throw e; }
+  finally { clearTimeout(timer); release(); }
 }
 async function withRetry(u, retries = RETRY_DELAYS.length) {
   let last;
@@ -603,13 +623,13 @@ async function loadBox(season, code, final) {
   const key = `${COMP}${season}:${code}`;
   if (final) {
     const m = boxMem.get(key); if (m && m.fin) return m;
-    const c = store.get("b:" + key);
+    const c = (await idb.get("b:" + key)) || store.get("b:" + key);
     if (c) { const b = unpackBox(c); b.fin = true; boxMem.set(key, b); return b; }
   }
   const b = normBox(await getJSON("live", `/api/Boxscore?gamecode=${code}&seasoncode=${COMP}${season}`));
   b.fin = !!final && !b.live;
   boxMem.set(key, b);
-  if (final && !b.live && b.teams.length) store.set("b:" + key, packBox(b));
+  if (final && !b.live && b.teams.length) idb.set("b:" + key, packBox(b)).then(ok => { if (!ok) store.set("b:" + key, packBox(b)); });
   return b;
 }
 async function loadSchedule(y) {
@@ -801,6 +821,7 @@ async function loadSeason() {
   const tok = S.token;
   S.round = defaultRound(); MT.round = null;
   render();                                            // show the page straight away
+  migrateToIdb();
   S.timer = setInterval(tick, LIVE_REFRESH_MS);
   await pollLive();                                    // then live scores...
   if (tok !== S.token) return;
@@ -1718,13 +1739,13 @@ async function renderStandings() {
 // For each address: a normal request (what the app does) and a "no-cors" probe. If the probe gets through but the
 // normal request fails, the server answered but its reply was unusable (e.g. a protection page or rate limit).
 async function probe(url, mode) {
-  const ac = new AbortController(), t0 = performance.now(), timer = setTimeout(() => ac.abort(), 12000);
+  const ac = new AbortController(), t0 = performance.now(), timer = setTimeout(() => ac.abort(), 8000);
   try {
     const r = await fetch(url, { mode, cache: "no-store", signal: ac.signal });
     let size = "";
     if (mode === "cors") { const b = await r.text(); size = ` · ${Math.round(b.length / 1024)} KB`; }
     return { ok: mode === "cors" ? r.ok : true, msg: mode === "cors" ? `HTTP ${r.status}${size}` : "reachable", ms: Math.round(performance.now() - t0) };
-  } catch (e) { return { ok: false, msg: e.name === "AbortError" ? "timed out after 12 s" : `${e.name}: ${e.message}`, ms: Math.round(performance.now() - t0) }; }
+  } catch (e) { return { ok: false, msg: e.name === "AbortError" ? "timed out after 8 s" : `${e.name}: ${e.message}`, ms: Math.round(performance.now() - t0) }; }
   finally { clearTimeout(timer); }
 }
 async function runConnTest() {
@@ -1734,9 +1755,20 @@ async function runConnTest() {
     ["EuroLeague live feed", `${HOSTS.live}/api/Header?gamecode=1&seasoncode=${COMP}${NOW_SEASON}`],
     ["Control (GitHub)", "https://api.github.com/zen"],
   ];
-  const lines = [`Silkiu Magnatai connection test · ${new Date().toISOString()}`, `Online: ${navigator.onLine} · Network: ${navigator.connection?.effectiveType || "unknown"}`, `Browser: ${navigator.userAgent}`, ""];
+  let lsKB = 0; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); lsKB += ((k || "").length + (localStorage.getItem(k) || "").length) * 2 / 1024; } } catch (e) {}
+  const boxes = await Promise.race([idb.count(), new Promise(r => setTimeout(() => r("n/a"), 1500))]);
+  const lines = [`Silkiu Magnatai connection test · ${new Date().toISOString()}`, `Online: ${navigator.onLine} · Network: ${navigator.connection?.effectiveType || "unknown"}`, `Browser: ${navigator.userAgent}`,
+    `App: requests running ${inflight}, waiting ${waiters.length}, timed out so far ${S.timeouts || 0} · small storage ${Math.round(lsKB)} KB · saved box scores ${boxes ?? "n/a"}`, ""];
   const rows = [];
-  out.innerHTML = '<div class="loading">Testing… this takes up to 30 seconds.</div>';
+  const paint = (done) => {
+    out.innerHTML = `<div class="tframe" style="box-shadow:none"><table class="rules"><tbody>${rows.map(r => `<tr><td><b>${esc(r.name)}</b><br><span class="sub">${esc(r.a.msg)} · ${r.a.ms} ms</span></td><td class="${r.a.ok ? "pos" : "negv"}" style="width:auto;white-space:normal">${esc(r.verdict)}</td></tr>`).join("")}
+      ${done ? "" : `<tr><td colspan="2" class="sub">Testing ${esc(tests[rows.length]?.[0] || "")}… (max 8 s each)</td></tr>`}</tbody></table></div>
+      <p class="note">App: ${inflight} requests running, ${waiters.length} waiting, ${S.timeouts || 0} timed out · storage ${Math.round(lsKB)} KB · ${boxes ?? "n/a"} box scores saved</p>
+      ${done ? `<p class="note">Send the report below to whoever maintains the app.</p>
+      <textarea id="conn-report" class="input" readonly rows="8" style="width:100%;font:12px/1.4 ui-monospace,monospace;margin-top:8px">${esc(lines.join("\n"))}</textarea>
+      <div class="row" style="margin-top:10px"><button class="btn primary" data-copyreport>Copy report</button><button class="btn" data-conntest>Run again</button></div>` : ""}`;
+  };
+  paint(false);
   for (const [name, url] of tests) {
     const a = await probe(url, "cors"); let b = null, verdict;
     if (a.ok) verdict = "Working";
@@ -1744,12 +1776,9 @@ async function runConnTest() {
     else { b = await probe(url, "no-cors"); verdict = b.ok ? "Server answered, but the browser blocked the reply" : "Could not connect at all"; }
     rows.push({ name, a, b, verdict });
     lines.push(`${name}: ${verdict} | normal: ${a.msg} (${a.ms} ms)${b ? ` | probe: ${b.msg} (${b.ms} ms)` : ""}`);
+    if (!$("#conn-out")) return;
+    paint(rows.length === tests.length);
   }
-  const report = lines.join("\n");
-  out.innerHTML = `<div class="tframe" style="box-shadow:none"><table class="rules"><tbody>${rows.map(r => `<tr><td><b>${esc(r.name)}</b><br><span class="sub">${esc(r.a.msg)} · ${r.a.ms} ms</span></td><td class="${r.a.ok ? "pos" : "negv"}" style="width:auto;white-space:normal">${esc(r.verdict)}</td></tr>`).join("")}</tbody></table></div>
-    <p class="note">Send the report below to whoever maintains the app.</p>
-    <textarea id="conn-report" class="input" readonly rows="7" style="width:100%;font:12px/1.4 ui-monospace,monospace;margin-top:8px">${esc(report)}</textarea>
-    <div class="row" style="margin-top:10px"><button class="btn primary" data-copyreport>Copy report</button><button class="btn" data-conntest>Run again</button></div>`;
 }
 function openConnTest() {
   openGameCode = null;
